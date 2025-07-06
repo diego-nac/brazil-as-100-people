@@ -15,9 +15,13 @@ body {
 #content {
   position: absolute;
   right: 0;
-  height: inherit;
+  height: fit-content;
   width: 40%;
   background-color: grey;
+}
+
+.text-information {
+  height: 100dvh;
 }
 
 #visualization {
