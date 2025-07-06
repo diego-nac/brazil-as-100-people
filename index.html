@@ -1,27 +1,56 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <link rel="icon" href="assets/images/favicon.ico" />
-  <link rel="stylesheet" href="style/index.css" />
-  <title>Brazil as 100 People</title>
-  <script type="module" src="scripts/main.js" defer></script>
-</head>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.1/noframework.waypoints.min.js"></script>
+    <link rel="stylesheet" href="style/index.css" />
+    <link rel="icon" href="assets/images/favicon.ico" />
+    <title>Brazil as 100 People</title>
+    <script type="module" src="scripts/main.js" defer></script>
+  </head>
 
-<body>
-  <!-- painel de texto (fixo à direita) -->
-  <aside id="content"></aside>
+  <body>
+    <div id="graphic">
+      <div class="container">
+        <div id="div0">
+          <h1>Brazil as 100 People</h1>
+          <h3>
+            How would the Brazilian population look like if it were just 100
+            people?
+          </h3>
+          <p>Each dot represents 1% of the population.</p>
+        </div>
+        <div id="div1">
+          <h2>Race Distribution</h2>
+          <p>
+            The dots below represent racial categories: Parda, Branca, Preta,
+            Amarela and Indígena.
+          </p>
+        </div>
+        <div id="div2">
+          <h2>Initial Layout</h2>
+          <p>
+            The dots start in a dispersed layout powered by force-based
+            simulation.
+          </p>
+        </div>
+        <div id="div3">
+          <h2>Scroll Down</h2>
+          <p>As you scroll, the dots transition into a vertical bar chart.</p>
+        </div>
+        <div id="div4">
+          <h2>Stacked Bar Chart</h2>
+          <p>The same dots now grouped by category and reorganized by value.</p>
+        </div>
+      </div>
 
-  <!-- primeiro gráfico (force-layout) fica “pinned” -->
-  <section id="visualization">
-    <svg id="race-svg"></svg>
-  </section>
-
-  <!-- segundo gráfico fica logo abaixo -->
-  <section id="bars-wrapper">
-    <!-- sentinel invisível que dispara o IntersectionObserver -->
-    <div id="scroll-sentinel"></div>
-    <svg id="bars-svg"></svg>
-  </section>
-</body>
+      <div class="fixed">
+        <svg id="race-svg"></svg>
+        <div id="scroll-sentinel"></div>
+        <svg id="bars-svg"></svg>
+      </div>
+    </div>
+  </body>
 </html>
