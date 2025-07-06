@@ -19,8 +19,8 @@ const SETTINGS = {
 
   node: {
     radius: 7,
-    stroke: "#000",
-    strokeWidth: 0
+    stroke: "#fff",
+    strokeWidth: 1
   },
 
   forces: {
