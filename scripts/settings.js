@@ -2,7 +2,7 @@
 const SETTINGS = {
   dims: { widthFactor: 0.6, heightFactor: 1 },
   colorScheme: ["#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854"],
-  node: { radius: 7, stroke: "#fff", strokeWidth: 1 },
+  node: { radius: 7, stroke: "gray", strokeWidth: 1 },
   forces: {
     collideRadius: 7,
     collideStrength: 1,
