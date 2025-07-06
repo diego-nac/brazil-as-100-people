@@ -1,0 +1,58 @@
+:root {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --text-color: #333;
+    --background-color: #f4f4f4;
+}
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+#visualization-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 55%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#d3-viz {
+    width: 100%;
+    height: 100%;
+}
+#content-container {
+    width: 45%;
+    margin-left: 55%;
+}
+.step {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2rem;
+    box-sizing: border-box;
+    border-bottom: 1px solid #ddd;
+}
+.step h1 {
+    font-size: 2.5rem;
+    color: #000;
+}
+.step h2 {
+    font-size: 2rem;
+    color: #333;
+}
+.step p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    max-width: 60ch;
+}
+.group-label {
+    font-size: 14px;
+    font-weight: bold;
+    fill: #555;
+    text-anchor: middle;
+}

@@ -1,27 +1,34 @@
 <!DOCTYPE html>
-
+<html lang="pt-BR">
 <head>
-  <link rel="icon" href="assets/images/favicon.ico">
-  <link rel="stylesheet" href="style.css">
-
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap"
-    rel="stylesheet">
-
-  <title>Brazil As 100 People</title>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O Brasil como 100 Pessoas</title>
+    <link rel="stylesheet" href="style/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 </head>
-
 <body>
-  <div id="content">
-    
-  </div>
-
-  <div id="visualization"><svg></svg></div>
-  </div><!-- /graphic -->
-
-  <script type="module" src="script.js"></script>
+    <div id="visualization-container">
+        <div id="d3-viz"></div>
+    </div>
+    <div id="content-container">
+        <section class="step" id="step-initial">
+            <h1>Se o Brasil fosse 100 pessoas...</h1>
+            <p>Cada ponto na tela representa 1% da população brasileira. Role a página para ver como eles se organizam de acordo com a demografia do país.</p>
+        </section>
+        <section class="step" id="step-race">
+            <h2>Distribuição por Raça/Cor</h2>
+            <p>Os pontos se agrupam de acordo com a autodeclaração de raça/cor, segundo o IBGE. As cores representam cada um dos cinco grupos principais.</p>
+        </section>
+        <section class="step" id="step-age">
+            <h2>Distribuição por Faixa Etária</h2>
+            <p>Agora, os mesmos pontos são reorganizados por grandes faixas etárias. As cores originais de raça são mantidas para mostrar a composição interna de cada grupo de idade.</p>
+        </section>
+         <section class="step" id="step-literacy">
+            <h2>Taxa de Alfabetização</h2>
+            <p>Finalmente, os pontos cinzas representam os 7% da população com 15 anos ou mais que não são alfabetizados. Os pontos coloridos representam os 93% alfabetizados.</p>
+        </section>
+    </div>
+    <script type="module" src="scripts/main.js"></script>
 </body>
+</html>
