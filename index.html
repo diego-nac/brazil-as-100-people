@@ -1,56 +1,34 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.1/noframework.waypoints.min.js"></script>
-    <link rel="stylesheet" href="style/index.css" />
-    <link rel="icon" href="assets/images/favicon.ico" />
-    <title>Brazil as 100 People</title>
-    <script type="module" src="scripts/main.js" defer></script>
-  </head>
-
-  <body>
-    <div id="graphic">
-      <div class="container">
-        <div id="div0">
-          <h1>Brazil as 100 People</h1>
-          <h3>
-            How would the Brazilian population look like if it were just 100
-            people?
-          </h3>
-          <p>Each dot represents 1% of the population.</p>
-        </div>
-        <div id="div1">
-          <h2>Race Distribution</h2>
-          <p>
-            The dots below represent racial categories: Parda, Branca, Preta,
-            Amarela and Indígena.
-          </p>
-        </div>
-        <div id="div2">
-          <h2>Initial Layout</h2>
-          <p>
-            The dots start in a dispersed layout powered by force-based
-            simulation.
-          </p>
-        </div>
-        <div id="div3">
-          <h2>Scroll Down</h2>
-          <p>As you scroll, the dots transition into a vertical bar chart.</p>
-        </div>
-        <div id="div4">
-          <h2>Stacked Bar Chart</h2>
-          <p>The same dots now grouped by category and reorganized by value.</p>
-        </div>
-      </div>
-
-      <div class="fixed">
-        <svg id="race-svg"></svg>
-        <div id="scroll-sentinel"></div>
-        <svg id="bars-svg"></svg>
-      </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O Brasil como 100 Pessoas</title>
+    <link rel="stylesheet" href="style/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+</head>
+<body>
+    <div id="visualization-container">
+        <div id="d3-viz"></div>
     </div>
-  </body>
+    <div id="content-container">
+        <section class="step" id="step-initial">
+            <h1>Se o Brasil fosse 100 pessoas...</h1>
+            <p>Cada ponto na tela representa 1% da população brasileira. Role a página para ver como eles se organizam de acordo com a demografia do país.</p>
+        </section>
+        <section class="step" id="step-race">
+            <h2>Distribuição por Raça/Cor</h2>
+            <p>Os pontos se agrupam de acordo com a autodeclaração de raça/cor, segundo o IBGE. As cores representam cada um dos cinco grupos principais.</p>
+        </section>
+        <section class="step" id="step-age">
+            <h2>Distribuição por Faixa Etária</h2>
+            <p>Agora, os mesmos pontos são reorganizados por grandes faixas etárias. As cores originais de raça são mantidas para mostrar a composição interna de cada grupo de idade.</p>
+        </section>
+         <section class="step" id="step-literacy">
+            <h2>Taxa de Alfabetização</h2>
+            <p>Finalmente, os pontos cinzas representam os 7% da população com 15 anos ou mais que não são alfabetizados. Os pontos coloridos representam os 93% alfabetizados.</p>
+        </section>
+    </div>
+    <script type="module" src="scripts/main.js"></script>
+</body>
 </html>

@@ -1,101 +1,58 @@
-@import url("https://fonts.googleapis.com/css?family=Open+Sans:300,600");
-* {
-  margin: 0;
-  padding: 0;
+:root {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --text-color: #333;
+    --background-color: #f4f4f4;
 }
-html {
-  min-width: 400px;
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    background-color: var(--background-color);
+    color: var(--text-color);
 }
-html,
-body {
-  min-width: 400px;
-  height: 100%;
-  width: 100%;
-  padding: 0;
-  scroll-behavior: smooth;
-  background: #b7b5b5;
-  color: #4d4c4c;
-  font-family: "Open Sans", sans-serif;
-  font-weight: 300;
-  box-sizing: border-box;
+#visualization-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 55%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-h1 {
-  line-height: 1.2;
-  color: #ccc;
+#d3-viz {
+    width: 100%;
+    height: 100%;
 }
-h2,
-h3 {
-  text-align: left;
-  line-height: 1.25;
-  font-weight: 300;
+#content-container {
+    width: 45%;
+    margin-left: 55%;
 }
-svg {
-  padding: 0;
+.step {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2rem;
+    box-sizing: border-box;
+    border-bottom: 1px solid #ddd;
 }
-img {
-  padding: 20px;
-  width: 80%;
+.step h1 {
+    font-size: 2.5rem;
+    color: #000;
 }
-text {
-  line-height: 1.25;
-  font-weight: 600;
-  font-size: 16px;
+.step h2 {
+    font-size: 2rem;
+    color: #333;
 }
-strong {
-  font-weight: 600;
-  color: #ccc;
+.step p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    max-width: 60ch;
 }
-i {
-  font-weight: 300;
-  color: #888;
-}
-em {
-  font-weight: 300;
-}
-p {
-  font-weight: 600;
-  color: #777;
-}
-a {
-  color: #ccc;
-}
-
-#graphic {
-  max-width: 2440px;
-  width: 96%;
-  position: relative;
-  height: 100%;
-  right: 2%;
-  left: 2%;
-}
-.container {
-  height: 100%;
-  max-width: 30%;
-  width: 40%;
-  margin: 0;
-  padding: 0;
-  position: absolute;
-  right: 7.5%;
-  line-height: 1.5;
-}
-.container div {
-  display: block;
-  padding: 50% 0 70% 0;
-}
-.fixed {
-  position: fixed;
-  max-width: 2440px;
-  width: 60%;
-  height: 100%;
-}
-#race-svg,
-#bars-svg {
-  width: 100%;
-  height: 100%;
-}
-#scroll-sentinel {
-  position: absolute;
-  top: 60vh;
-  width: 100%;
-  height: 1px;
+.group-label {
+    font-size: 14px;
+    font-weight: bold;
+    fill: #555;
+    text-anchor: middle;
 }
