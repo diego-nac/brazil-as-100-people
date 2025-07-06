@@ -30,3 +30,16 @@ body {
   height: 100%;
   width: 100%;
 }
+/* retire a “trava” de altura fixa */
+html, body { height: auto; min-height: 100%; }
+
+/* mantém o primeiro gráfico “pinned”, mas deixa rolar */
+#visualization      { position: sticky; top: 0; width: 60%; height: 100vh; }
+#visualization svg  { width: 100%;  height: 100%; }
+
+#content            { position: fixed; right: 0; top: 0;
+                       width: 40%; height: 100vh; background: grey; }
+
+#bars-wrapper       { position: relative; width: 60%; margin-left: 40%; }
+#bars-svg           { width: 100%; height: 80vh; }
+#scroll-sentinel    { position: absolute; top: 10vh; width: 100%; height: 1px; }
