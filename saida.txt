@@ -1,3 +1,123 @@
+Conteúdo de ./index.html:
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O Brasil como 100 Pessoas</title>
+    <link rel="stylesheet" href="style/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+</head>
+<body>
+    <div id="visualization-container">
+        <div id="d3-viz"></div>
+    </div>
+    <div id="content-container">
+        <section class="step" id="step-initial">
+            <h1>Se o Brasil fosse 100 pessoas...</h1>
+            <p>Cada ponto na tela representa 1% da população brasileira. Role a página para ver como eles se organizam de acordo com a demografia do país.</p>
+        </section>
+        <section class="step" id="step-race">
+            <h2>Distribuição por Raça/Cor</h2>
+            <p>Os pontos se agrupam de acordo com a autodeclaração de raça/cor, segundo o IBGE. As cores representam cada um dos cinco grupos principais.</p>
+        </section>
+        <section class="step" id="step-age">
+            <h2>Distribuição por Faixa Etária</h2>
+            <p>Agora, os mesmos pontos são reorganizados por grandes faixas etárias. As cores originais de raça são mantidas para mostrar a composição interna de cada grupo de idade.</p>
+        </section>
+         <section class="step" id="step-literacy">
+            <h2>Taxa de Alfabetização</h2>
+            <p>Finalmente, os pontos cinzas representam os 7% da população com 15 anos ou mais que não são alfabetizados. Os pontos coloridos representam os 93% alfabetizados.</p>
+        </section>
+    </div>
+    <script type="module" src="scripts/main.js"></script>
+</body>
+</html>
+
+Conteúdo de ./style/index.css:
+:root {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --text-color: #333;
+    --background-color: #f4f4f4;
+}
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+#visualization-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 55%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#d3-viz {
+    width: 100%;
+    height: 100%;
+}
+#content-container {
+    width: 45%;
+    margin-left: 55%;
+}
+.step {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2rem;
+    box-sizing: border-box;
+    border-bottom: 1px solid #ddd;
+}
+.step h1 {
+    font-size: 2.5rem;
+    color: #000;
+}
+.step h2 {
+    font-size: 2rem;
+    color: #333;
+}
+.step p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    max-width: 60ch;
+}
+.group-label {
+    font-size: 14px;
+    font-weight: bold;
+    fill: #555;
+    text-anchor: middle;
+}
+
+Conteúdo de ./scripts/settings.js:
+const SETTINGS = {
+    raceLabels: ["Parda", "Branca", "Preta", "Amarela", "Indígena"],
+    raceColors: ["#e6a77a", "#d9d9d9", "#634e3f", "#f2d670", "#c76b5d"],
+    ageLabels: ["0-14", "15-29", "30-49", "50-69", "70+"],
+    ageColors: ["#a1d99b", "#74c476", "#41ab5d", "#238b45", "#005a32"],
+    literacyColors: ["#5ab4ac", "#a9a9a9"],
+    node: {
+        radius: 8,
+        stroke: "rgba(255,255,255,0.8)",
+        strokeWidth: 1
+    },
+    forces: {
+        collideRadius: 10,
+        collideStrength: 1,
+        xStrength: 0.1,
+        yStrength: 0.1,
+        alphaDecay: 0.0228,
+        velocityDecay: 0.4
+    }
+};
+export default SETTINGS;
+
+Conteúdo de ./scripts/main.js:
 import SETTINGS from "./settings.js";
 
 const d3Viz = d3.select("#d3-viz");
@@ -279,3 +399,4 @@ Promise.all([
 }).catch(error => {
     console.error("Erro ao carregar os dados. Verifique se os arquivos 'ibge.csv' e 'brasil_simple_shape.json' estão na pasta 'data'.", error);
 });
+
