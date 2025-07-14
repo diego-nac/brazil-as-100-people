@@ -4,35 +4,39 @@ const d3Viz = d3.select("#d3-viz");
 let sharedD3 = {};
 
 /**
- * NOVO: Função para posicionar os nós aleatoriamente dentro de um polígono GeoJSON.
- * Esta função é genérica e funciona para qualquer polígono fornecido.
+ * NOVO: Função para posicionar os nós de forma determinística dentro de um polígono GeoJSON.
  * @param {Array} nodes - O array de nós (os 100 pontos).
  * @param {object} geoData - O objeto GeoJSON carregado com as bordas do polígono.
  * @param {number} width - A largura do contêiner SVG.
  * @param {number} height - A altura do contêiner SVG.
  */
 function assignInitialPositions(nodes, geoData, width, height) {
-    // 1. Cria uma projeção D3 que escala e centraliza o GeoJSON para caber na área de visualização.
-    const projection = d3.geoMercator().fitSize([width * 0.9, height * 0.9], geoData); // Usamos 90% para ter uma margem
+    const scaleFactor = 0.4; // Fator de escala para o polígono
+    const marginX = (width * (1 - scaleFactor)) / 2;
+    const marginY = (height * (1 - scaleFactor)) / 2;
 
-    // 2. Obtém os limites geográficos (bounding box) do polígono para otimizar a geração de pontos.
+    const projection = d3.geoMercator().fitSize([width * scaleFactor, height * scaleFactor], geoData);
     const bounds = d3.geoBounds(geoData);
+
+    // MODIFICADO: Gerador de números pseudoaleatórios com semente fixa para um layout previsível.
+    let seed = 0.5; // Semente inicial fixa
+    function seededRandom() {
+        const x = Math.sin(seed++) * 10000;
+        return x - Math.floor(x);
+    }
 
     nodes.forEach(node => {
         let point, lon, lat;
-        // 3. Loop: continua gerando pontos até encontrar um que esteja DENTRO do polígono.
         while (true) {
-            // Gera coordenadas de longitude e latitude aleatórias dentro dos limites do polígono.
-            lon = (Math.random() * (bounds[1][0] - bounds[0][0])) + bounds[0][0];
-            lat = (Math.random() * (bounds[1][1] - bounds[0][1])) + bounds[0][1];
+            // Usa o gerador previsível em vez de Math.random()
+            lon = (seededRandom() * (bounds[1][0] - bounds[0][0])) + bounds[0][0];
+            lat = (seededRandom() * (bounds[1][1] - bounds[0][1])) + bounds[0][1];
             
-            // 4. A MÁGICA: d3.geoContains verifica se as coordenadas [lon, lat] estão contidas no polígono.
             if (d3.geoContains(geoData, [lon, lat])) {
-                // 5. Se o ponto for válido, converte as coordenadas geográficas para coordenadas de tela (pixels x, y).
                 point = projection([lon, lat]);
-                node.initialX = point[0] + (width * 0.05); // Ajusta para a margem de 90%
-                node.initialY = point[1] + (height * 0.05);
-                break; // Encontrou um ponto válido, sai do loop.
+                node.initialX = point[0] + marginX;
+                node.initialY = point[1] + marginY;
+                break;
             }
         }
     });
@@ -96,7 +100,8 @@ function processData(data) {
     return { nodes, percentages, finalCounts };
 }
 
-function initializeVisualization(nodeData) {
+// MODIFICADO: A função agora aceita geoData para criar a contenção.
+function initializeVisualization(nodeData, geoData) {
     const width = d3Viz.node().getBoundingClientRect().width;
     const height = d3Viz.node().getBoundingClientRect().height;
     const svg = d3Viz.append("svg").attr("width", width).attr("height", height);
@@ -131,7 +136,32 @@ function initializeVisualization(nodeData) {
     }
 
     nodeSelection.call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
-    simulation.on("tick", () => nodeSelection.attr("cx", d => d.x).attr("cy", d => d.y));
+
+    // MODIFICADO: Lógica de contenção dentro do polígono a cada passo da simulação.
+    const scaleFactor = 0.7; // Deve ser o mesmo scaleFactor de assignInitialPositions
+    const marginX = (width * (1 - scaleFactor)) / 2;
+    const marginY = (height * (1 - scaleFactor)) / 2;
+    const projection = d3.geoMercator().fitSize([width * scaleFactor, height * scaleFactor], geoData);
+    
+    function ticked() {
+        nodeSelection.each(function(d) {
+            // Converte a posição atual (x, y) de volta para coordenadas geográficas
+            const invertedPoint = projection.invert([d.x - marginX, d.y - marginY]);
+            
+            // Se o ponto invertido não estiver dentro do polígono original...
+            if (!d3.geoContains(geoData, invertedPoint)) {
+                // ...reverta para a posição anterior (antes deste passo da simulação).
+                // Isso efetivamente impede que o nó saia dos limites.
+                d.x = d.px || d.x;
+                d.y = d.py || d.y;
+            }
+        });
+
+        nodeSelection.attr("cx", d => d.x).attr("cy", d => d.y);
+    }
+
+    simulation.on("tick", ticked);
+    
     sharedD3 = { simulation, nodeSelection, labelSelection, width, height };
 }
 
@@ -220,10 +250,11 @@ Promise.all([
     // Calcula e atribui as posições iniciais dos nós dentro do polígono.
     assignInitialPositions(processedData.nodes, geoData, width, height);
     
-    initializeVisualization(processedData.nodes);
+    // Passa o geoData para a função de inicialização.
+    initializeVisualization(processedData.nodes, geoData);
     setupObserver(processedData);
     
     transitionToInitial();
 }).catch(error => {
-    console.error("Erro ao carregar os dados. Verifique se os arquivos 'ibge.csv' e 'simple_polygon.json' estão na pasta 'data'.", error);
+    console.error("Erro ao carregar os dados. Verifique se os arquivos 'ibge.csv' e 'brasil_simple_shape.json' estão na pasta 'data'.", error);
 });

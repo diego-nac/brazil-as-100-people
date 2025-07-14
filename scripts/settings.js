@@ -5,13 +5,13 @@ const SETTINGS = {
     ageColors: ["#a1d99b", "#74c476", "#41ab5d", "#238b45", "#005a32"],
     literacyColors: ["#5ab4ac", "#a9a9a9"],
     node: {
-        radius: 7,
+        radius: 8,
         stroke: "rgba(255,255,255,0.8)",
-        strokeWidth: 1.5
+        strokeWidth: 1
     },
     forces: {
-        collideRadius: 8,
-        collideStrength: 0.7,
+        collideRadius: 10,
+        collideStrength: 1,
         xStrength: 0.1,
         yStrength: 0.1,
         alphaDecay: 0.0228,
