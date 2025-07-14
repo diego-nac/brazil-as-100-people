@@ -1,6 +1,44 @@
 import SETTINGS from "./settings.js";
+
 const d3Viz = d3.select("#d3-viz");
 let sharedD3 = {};
+
+/**
+ * NOVO: Função para posicionar os nós aleatoriamente dentro de um polígono GeoJSON.
+ * Esta função é genérica e funciona para qualquer polígono fornecido.
+ * @param {Array} nodes - O array de nós (os 100 pontos).
+ * @param {object} geoData - O objeto GeoJSON carregado com as bordas do polígono.
+ * @param {number} width - A largura do contêiner SVG.
+ * @param {number} height - A altura do contêiner SVG.
+ */
+function assignInitialPositions(nodes, geoData, width, height) {
+    // 1. Cria uma projeção D3 que escala e centraliza o GeoJSON para caber na área de visualização.
+    const projection = d3.geoMercator().fitSize([width * 0.9, height * 0.9], geoData); // Usamos 90% para ter uma margem
+
+    // 2. Obtém os limites geográficos (bounding box) do polígono para otimizar a geração de pontos.
+    const bounds = d3.geoBounds(geoData);
+
+    nodes.forEach(node => {
+        let point, lon, lat;
+        // 3. Loop: continua gerando pontos até encontrar um que esteja DENTRO do polígono.
+        while (true) {
+            // Gera coordenadas de longitude e latitude aleatórias dentro dos limites do polígono.
+            lon = (Math.random() * (bounds[1][0] - bounds[0][0])) + bounds[0][0];
+            lat = (Math.random() * (bounds[1][1] - bounds[0][1])) + bounds[0][1];
+            
+            // 4. A MÁGICA: d3.geoContains verifica se as coordenadas [lon, lat] estão contidas no polígono.
+            if (d3.geoContains(geoData, [lon, lat])) {
+                // 5. Se o ponto for válido, converte as coordenadas geográficas para coordenadas de tela (pixels x, y).
+                point = projection([lon, lat]);
+                node.initialX = point[0] + (width * 0.05); // Ajusta para a margem de 90%
+                node.initialY = point[1] + (height * 0.05);
+                break; // Encontrou um ponto válido, sai do loop.
+            }
+        }
+    });
+}
+
+// A função processData permanece exatamente a mesma.
 function processData(data) {
     const totals = { race: new Array(5).fill(0), age: new Array(5).fill(0), literacy: [0, 0] };
     data.forEach(d => {
@@ -30,22 +68,11 @@ function processData(data) {
     };
     const adjustAndRoundTo100 = (percentages) => {
         let rounded = percentages.map(Math.round);
-        percentages.forEach((p, i) => {
-            if (p > 0 && rounded[i] === 0) {
-                rounded[i] = 1;
-            }
-        });
+        percentages.forEach((p, i) => { if (p > 0 && rounded[i] === 0) { rounded[i] = 1; } });
         let currentSum = d3.sum(rounded);
         while (currentSum !== 100) {
-            if (currentSum > 100) {
-                let maxIndex = rounded.indexOf(d3.max(rounded));
-                if (rounded[maxIndex] > 1) {
-                    rounded[maxIndex]--;
-                }
-            } else {
-                let maxIndex = rounded.indexOf(d3.max(rounded));
-                rounded[maxIndex]++;
-            }
+            let idx = currentSum > 100 ? rounded.indexOf(d3.max(rounded)) : rounded.indexOf(d3.min(rounded));
+            rounded[idx] += currentSum > 100 ? -1 : 1;
             currentSum = d3.sum(rounded);
         }
         return rounded;
@@ -68,71 +95,67 @@ function processData(data) {
     });
     return { nodes, percentages, finalCounts };
 }
+
 function initializeVisualization(nodeData) {
     const width = d3Viz.node().getBoundingClientRect().width;
     const height = d3Viz.node().getBoundingClientRect().height;
     const svg = d3Viz.append("svg").attr("width", width).attr("height", height);
+
+    nodeData.forEach((node) => {
+        node.x = node.initialX;
+        node.y = node.initialY;
+    });
+
     const simulation = d3.forceSimulation(nodeData)
         .velocityDecay(SETTINGS.forces.velocityDecay)
         .alphaDecay(SETTINGS.forces.alphaDecay)
         .force("collision", d3.forceCollide().radius(SETTINGS.forces.collideRadius).strength(SETTINGS.forces.collideStrength));
+
     const nodeSelection = svg.append("g").selectAll("circle").data(nodeData).join("circle")
         .attr("r", SETTINGS.node.radius)
         .attr("stroke", SETTINGS.node.stroke)
         .attr("stroke-width", SETTINGS.node.strokeWidth);
+
     const labelSelection = svg.append("g").selectAll(".group-label");
+
     function dragstarted(event, d) {
         if (!event.active) simulation.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
+        d.fx = d.x; d.fy = d.y;
     }
     function dragged(event, d) {
-        d.fx = event.x;
-        d.fy = event.y;
+        d.fx = event.x; d.fy = event.y;
     }
     function dragended(event, d) {
         if (!event.active) simulation.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
+        d.fx = null; d.fy = null;
     }
+
     nodeSelection.call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
     simulation.on("tick", () => nodeSelection.attr("cx", d => d.x).attr("cy", d => d.y));
     sharedD3 = { simulation, nodeSelection, labelSelection, width, height };
 }
+
 function updateLabels(labelData) {
     sharedD3.labelSelection = sharedD3.labelSelection
         .data(labelData, d => d.text)
         .join(
-            enter => enter.append("text")
-                .attr("class", "group-label")
-                .attr("x", d => d.x)
-                .attr("y", d => d.y)
-                .text(d => d.text)
-                .attr("opacity", 0)
-                .call(enter => enter.transition().duration(800).attr("opacity", 1)),
-            update => update
-                .call(update => update.transition().duration(800)
-                    .attr("x", d => d.x)
-                    .attr("y", d => d.y)
-                    .attr("opacity", 1)),
-            exit => exit
-                .call(exit => exit.transition().duration(400).attr("opacity", 0).remove())
+            enter => enter.append("text").attr("class", "group-label").attr("x", d => d.x).attr("y", d => d.y).text(d => d.text).attr("opacity", 0).call(enter => enter.transition().duration(800).attr("opacity", 1)),
+            update => update.call(update => update.transition().duration(800).attr("x", d => d.x).attr("y", d => d.y).attr("opacity", 1)),
+            exit => exit.call(exit => exit.transition().duration(400).attr("opacity", 0).remove())
         )
-        .on("mouseover", function (event, d) {
-            d3.select(this).text(`${d.percentage.toFixed(1)}%`).style("font-weight", "bold");
-        })
-        .on("mouseout", function (event, d) {
-            d3.select(this).text(d.text).style("font-weight", "normal");
-        });
+        .on("mouseover", function (event, d) { d3.select(this).text(`${d.percentage.toFixed(1)}%`).style("font-weight", "bold"); })
+        .on("mouseout", function (event, d) { d3.select(this).text(d.text).style("font-weight", "normal"); });
 }
+
 function transitionToInitial() {
     sharedD3.simulation
-        .force("x", d3.forceX(sharedD3.width / 2).strength(SETTINGS.forces.xStrength))
-        .force("y", d3.forceY(sharedD3.height / 2).strength(SETTINGS.forces.yStrength))
+        .force("x", d3.forceX(d => d.initialX).strength(SETTINGS.forces.xStrength))
+        .force("y", d3.forceY(d => d.initialY).strength(SETTINGS.forces.yStrength))
         .alpha(1).restart();
     sharedD3.nodeSelection.transition().duration(800).attr("fill", "#cccccc");
     updateLabels([]);
 }
+
 function transitionToRace(percentages) {
     const { simulation, nodeSelection, width, height } = sharedD3;
     const raceScale = d3.scalePoint().domain(d3.range(SETTINGS.raceLabels.length)).range([width * 0.15, width * 0.85]);
@@ -144,6 +167,7 @@ function transitionToRace(percentages) {
     const labelData = SETTINGS.raceLabels.map((text, i) => ({ text, percentage: percentages[i], x: raceScale(i), y: height * 0.25 }));
     updateLabels(labelData);
 }
+
 function transitionToAge(percentages) {
     const { simulation, nodeSelection, width, height } = sharedD3;
     const ageScale = d3.scalePoint().domain(d3.range(SETTINGS.ageLabels.length)).range([width * 0.1, width * 0.9]);
@@ -155,6 +179,7 @@ function transitionToAge(percentages) {
     const labelData = SETTINGS.ageLabels.map((text, i) => ({ text, percentage: percentages[i], x: ageScale(i), y: height * 0.25 }));
     updateLabels(labelData);
 }
+
 function transitionToLiteracy(percentages) {
     const { simulation, nodeSelection, width, height } = sharedD3;
     const literacyLabels = ["Alfabetizados", "Não Alfabetizados"];
@@ -162,11 +187,11 @@ function transitionToLiteracy(percentages) {
         .force("x", d3.forceX(width / 2).strength(SETTINGS.forces.xStrength))
         .force("y", d3.forceY(height / 2).strength(SETTINGS.forces.yStrength))
         .alpha(1).restart();
-    nodeSelection.transition().duration(800)
-        .attr("fill", d => SETTINGS.literacyColors[d.literacyGroup]);
+    nodeSelection.transition().duration(800).attr("fill", d => SETTINGS.literacyColors[d.literacyGroup]);
     const labelData = literacyLabels.map((text, i) => ({ text, percentage: percentages[i], x: width / 2, y: i === 0 ? height * 0.25 : height * 0.75 }));
     updateLabels(labelData);
 }
+
 function setupObserver(processedData) {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -181,9 +206,24 @@ function setupObserver(processedData) {
     }, { threshold: 0.65 });
     document.querySelectorAll('.step').forEach(step => observer.observe(step));
 }
-d3.csv("data/ibge.csv", d3.autoType).then(data => {
+
+// MODIFICADO: Carrega o CSV e o GeoJSON antes de inicializar.
+Promise.all([
+    d3.csv("data/ibge.csv", d3.autoType),
+    d3.json("data/brasil_simple_shape.json") // <<< Certifique-se de que este arquivo existe na pasta 'data'.
+]).then(([data, geoData]) => {
     const processedData = processData(data);
+    
+    const width = d3Viz.node().getBoundingClientRect().width;
+    const height = d3Viz.node().getBoundingClientRect().height;
+
+    // Calcula e atribui as posições iniciais dos nós dentro do polígono.
+    assignInitialPositions(processedData.nodes, geoData, width, height);
+    
     initializeVisualization(processedData.nodes);
     setupObserver(processedData);
+    
     transitionToInitial();
+}).catch(error => {
+    console.error("Erro ao carregar os dados. Verifique se os arquivos 'ibge.csv' e 'simple_polygon.json' estão na pasta 'data'.", error);
 });
