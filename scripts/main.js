@@ -364,47 +364,16 @@ function transitionToRace(percentages) {
   updateLabels(labelData);
 }
 
-function transitionToAge(percentages) {
-  const { simulation, nodeSelection, width, height } = sharedD3;
-  const ageScale = d3
-    .scalePoint()
-    .domain(d3.range(SETTINGS.ageLabels.length))
-    .range([width * 0.1, width * 0.9]);
-  simulation
-    .force(
-      "x",
-      d3.forceX((d) => ageScale(d.ageGroup)).strength(SETTINGS.forces.xStrength)
-    )
-    .force("y", d3.forceY(height / 2).strength(SETTINGS.forces.yStrength))
-    .alpha(1)
-    .restart();
-  nodeSelection
-    .transition()
-    .duration(800)
-    .attr("fill", (d) => SETTINGS.ageColors[d.ageGroup]);
-  const labelData = SETTINGS.ageLabels.map((text, i) => ({
-    text,
-    percentage: percentages[i],
-    x: ageScale(i),
-    y: height * 0.25,
-  }));
-  updateLabels(labelData);
-}
-
-// FUNÇÃO ATUALIZADA
 function transitionToAgePyramid(processedData) {
   const { simulation, nodeSelection, width, height } = sharedD3;
   const counts = processedData.finalCounts.age;
   const pyramidLayout = [];
-  const rowHeight = 45; // Aumentado para melhor espaçamento
+  const rowHeight = 45;
   const nodeSpacing = SETTINGS.node.radius * 2.5;
 
-  // ✨ CORREÇÃO AQUI: Calcula a altura total da pirâmide para centralizá-la
   const totalPyramidHeight = (counts.length - 1) * rowHeight;
-  // Define a posição Y da BASE da pirâmide para que o conjunto fique centralizado
   let currentY = height / 2 + totalPyramidHeight / 2;
 
-  // Cria o layout da pirâmide (de baixo para cima, como antes)
   for (let i = 0; i < counts.length; i++) {
     const numNodes = counts[i];
     const rowWidth = numNodes * nodeSpacing;
@@ -414,10 +383,9 @@ function transitionToAgePyramid(processedData) {
       startX: startX,
       count: numNodes,
     });
-    currentY -= rowHeight; // Move para a linha de cima
+    currentY -= rowHeight;
   }
 
-  // Associa cada nó a uma posição na pirâmide
   for (let ageGroup = 0; ageGroup < pyramidLayout.length; ageGroup++) {
     const layout = pyramidLayout[ageGroup];
     const nodesInGroup = processedData.nodes.filter(
@@ -438,9 +406,8 @@ function transitionToAgePyramid(processedData) {
   nodeSelection
     .transition()
     .duration(800)
-    .attr("fill", (d) => SETTINGS.raceColors[d.raceGroup]);
+    .attr("fill", (d) => SETTINGS.ageColors[d.ageGroup]);
 
-  // Atualiza os rótulos para alinhá-los com as novas posições
   const labelData = SETTINGS.ageLabels.map((text, i) => ({
     text: text,
     percentage: processedData.percentages.age[i],
