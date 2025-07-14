@@ -2,35 +2,39 @@ Conteúdo de ./index.html:
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>O Brasil como 100 Pessoas</title>
-    <link rel="stylesheet" href="style/index.css">
-    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O Brasil como 100 Pessoas</title>
+    <link rel="stylesheet" href="style/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 </head>
 <body>
-    <div id="visualization-container">
-        <div id="d3-viz"></div>
-    </div>
-    <div id="content-container">
-        <section class="step" id="step-initial">
-            <h1>Se o Brasil fosse 100 pessoas...</h1>
-            <p>Cada ponto na tela representa 1% da população brasileira. Role a página para ver como eles se organizam de acordo com a demografia do país.</p>
+    <div id="visualization-container">
+        <div id="d3-viz"></div>
+    </div>
+    <div id="content-container">
+        <section class="step" id="step-initial">
+            <h1>Se o Brasil fosse 100 pessoas...</h1>
+            <p>Cada ponto na tela representa 1% da população brasileira. Role a página para ver como eles se organizam de acordo com a demografia do país.</p>
+        </section>
+        <section class="step" id="step-race">
+            <h2>Distribuição por Raça/Cor</h2>
+            <p>Os pontos se agrupam de acordo com a autodeclaração de raça/cor, segundo o IBGE. As cores representam cada um dos cinco grupos principais.</p>
+        </section>
+        <section class="step" id="step-age">
+            <h2>Distribuição por Faixa Etária</h2>
+            <p>Agora, os mesmos pontos são reorganizados por grandes faixas etárias. As cores originais de raça são mantidas para mostrar a composição interna de cada grupo de idade.</p>
+        </section>
+        <section class="step" id="step-age-pyramid">
+            <h2>Pirâmide Etária com Composição Racial</h2>
+            <p>Os 100 pontos se organizam para formar uma pirâmide etária. As faixas etárias mais jovens (e mais populosas) formam a base larga da pirâmide, e as faixas mais velhas (menos populosas) formam o topo estreito. Crucialmente, cada ponto mantém a cor original de sua raça.</p>
         </section>
-        <section class="step" id="step-race">
-            <h2>Distribuição por Raça/Cor</h2>
-            <p>Os pontos se agrupam de acordo com a autodeclaração de raça/cor, segundo o IBGE. As cores representam cada um dos cinco grupos principais.</p>
-        </section>
-        <section class="step" id="step-age">
-            <h2>Distribuição por Faixa Etária</h2>
-            <p>Agora, os mesmos pontos são reorganizados por grandes faixas etárias. As cores originais de raça são mantidas para mostrar a composição interna de cada grupo de idade.</p>
-        </section>
-         <section class="step" id="step-literacy">
-            <h2>Taxa de Alfabetização</h2>
-            <p>Finalmente, os pontos cinzas representam os 7% da população com 15 anos ou mais que não são alfabetizados. Os pontos coloridos representam os 93% alfabetizados.</p>
-        </section>
-    </div>
-    <script type="module" src="scripts/main.js"></script>
+        <section class="step" id="step-literacy">
+            <h2>Taxa de Alfabetização</h2>
+            <p>Finalmente, os pontos cinzas representam os 7% da população com 15 anos ou mais que não são alfabetizados. Os pontos coloridos representam os 93% alfabetizados.</p>
+        </section>
+    </div>
+    <script type="module" src="scripts/main.js"></script>
 </body>
 </html>
 
@@ -124,75 +128,74 @@ const d3Viz = d3.select("#d3-viz");
 let sharedD3 = {};
 
 function assignInitialPositions(nodes, geoData, width, height) {
-    // AJUSTE: O scaleFactor foi ajustado para 0.9 para melhor visualização e consistência.
-    const scaleFactor = 0.3;
-    const marginX = (width * (1 - scaleFactor)) / 2;
-    const marginY = (height * (1 - scaleFactor)) / 2;
+    // AJUSTE: O scaleFactor foi ajustado para 0.9 para melhor visualização e consistência.
+    const scaleFactor = 0.3;
+    const marginX = (width * (1 - scaleFactor)) / 2;
+    const marginY = (height * (1 - scaleFactor)) / 2;
 
-    const projection = d3.geoMercator()
-        .fitSize([width * scaleFactor, height * scaleFactor], geoData);
-    
-    const bounds = d3.geoBounds(geoData);
+    const projection = d3.geoMercator()
+        .fitSize([width * scaleFactor, height * scaleFactor], geoData);
+    
+    const bounds = d3.geoBounds(geoData);
 
-    let gridPoints = [];
-    let step = 3.0;
+    let gridPoints = [];
+    let step = 3.0;
 
-    while (gridPoints.length < 100) {
-        gridPoints = [];
-        step *= 0.95;
+    while (gridPoints.length < 100) {
+        gridPoints = [];
+        step *= 0.95;
 
-        if (step < 0.05) {
-            console.error("Não foi possível gerar 100 pontos para o grid.");
-            nodes.forEach(node => {
-                node.initialX = Math.random() * width;
-                node.initialY = Math.random() * height;
-            });
-            return;
-        }
+        if (step < 0.05) {
+            console.error("Não foi possível gerar 100 pontos para o grid.");
+            nodes.forEach(node => {
+                node.initialX = Math.random() * width;
+                node.initialY = Math.random() * height;
+            });
+            return;
+        }
 
-        for (let lat = bounds[1][1]; lat >= bounds[0][1]; lat -= step) {
-            for (let lon = bounds[0][0]; lon <= bounds[1][0]; lon += step) {
-                if (d3.geoContains(geoData, [lon, lat])) {
-                    gridPoints.push([lon, lat]);
-                }
-            }
-        }
-    }
+        for (let lat = bounds[1][1]; lat >= bounds[0][1]; lat -= step) {
+            for (let lon = bounds[0][0]; lon <= bounds[1][0]; lon += step) {
+                if (d3.geoContains(geoData, [lon, lat])) {
+                    gridPoints.push([lon, lat]);
+                }
+            }
+        }
+    }
 
-    function selectEvenly(array, count) {
-        const result = [];
-        const total = array.length;
-        if (total < count) return array;
-        const interval = total / count;
-        for (let i = 0; i < count; i++) {
-            result.push(array[Math.floor(i * interval)]);
-        }
-        return result;
-    }
-    const finalGridPoints = selectEvenly(gridPoints, 100);
+    function selectEvenly(array, count) {
+        const result = [];
+        const total = array.length;
+        if (total < count) return array;
+        const interval = total / count;
+        for (let i = 0; i < count; i++) {
+            result.push(array[Math.floor(i * interval)]);
+        }
+        return result;
+    }
+    const finalGridPoints = selectEvenly(gridPoints, 100);
 
-    function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-    }
-    
-    shuffleArray(finalGridPoints);
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+    
+    shuffleArray(finalGridPoints);
 
-    nodes.forEach((node, i) => {
-        if (finalGridPoints[i]) {
-            const point = projection(finalGridPoints[i]);
-            node.initialX = point[0] + marginX;
-            node.initialY = point[1] + marginY;
-        } else {
-            node.initialX = width / 2;
-            node.initialY = height / 2;
-        }
-    });
+    nodes.forEach((node, i) => {
+        if (finalGridPoints[i]) {
+            const point = projection(finalGridPoints[i]);
+            node.initialX = point[0] + marginX;
+            node.initialY = point[1] + marginY;
+        } else {
+            node.initialX = width / 2;
+            node.initialY = height / 2;
+        }
+    });
 }
 
-// A função processData permanece exatamente a mesma.
 function processData(data) {
     const totals = { race: new Array(5).fill(0), age: new Array(5).fill(0), literacy: [0, 0] };
     data.forEach(d => {
@@ -251,152 +254,206 @@ function processData(data) {
 }
 
 function initializeVisualization(nodeData, geoData) {
-    const width = d3Viz.node().getBoundingClientRect().width;
-    const height = d3Viz.node().getBoundingClientRect().height;
-    const svg = d3Viz.append("svg").attr("width", width).attr("height", height);
+    const width = d3Viz.node().getBoundingClientRect().width;
+    const height = d3Viz.node().getBoundingClientRect().height;
+    const svg = d3Viz.append("svg").attr("width", width).attr("height", height);
 
-    nodeData.forEach((node) => {
-        node.x = node.initialX;
-        node.y = node.initialY;
-    });
+    nodeData.forEach((node) => {
+        node.x = node.initialX;
+        node.y = node.initialY;
+    });
 
-    const simulation = d3.forceSimulation(nodeData)
-        .velocityDecay(SETTINGS.forces.velocityDecay)
-        .alphaDecay(SETTINGS.forces.alphaDecay)
-        .force("collision", d3.forceCollide().radius(SETTINGS.forces.collideRadius).strength(SETTINGS.forces.collideStrength));
+    const simulation = d3.forceSimulation(nodeData)
+        .velocityDecay(SETTINGS.forces.velocityDecay)
+        .alphaDecay(SETTINGS.forces.alphaDecay)
+        .force("collision", d3.forceCollide().radius(SETTINGS.forces.collideRadius).strength(SETTINGS.forces.collideStrength));
 
-    const nodeSelection = svg.append("g").selectAll("circle").data(nodeData).join("circle")
-        .attr("r", SETTINGS.node.radius)
-        .attr("stroke", SETTINGS.node.stroke)
-        .attr("stroke-width", SETTINGS.node.strokeWidth);
+    const nodeSelection = svg.append("g").selectAll("circle").data(nodeData).join("circle")
+        .attr("r", SETTINGS.node.radius)
+        .attr("stroke", SETTINGS.node.stroke)
+        .attr("stroke-width", SETTINGS.node.strokeWidth);
 
-    const labelSelection = svg.append("g").selectAll(".group-label");
+    const labelSelection = svg.append("g").selectAll(".group-label");
 
-    function dragstarted(event, d) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
-        d.fx = d.x; d.fy = d.y;
-    }
-    function dragged(event, d) {
-        d.fx = event.x; d.fy = event.y;
-    }
-    function dragended(event, d) {
-        if (!event.active) simulation.alphaTarget(0);
-        d.fx = null; d.fy = null;
-    }
+    function dragstarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x; d.fy = d.y;
+    }
+    function dragged(event, d) {
+        d.fx = event.x; d.fy = event.y;
+    }
+    function dragended(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null; d.fy = null;
+    }
 
-    nodeSelection.call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
+    nodeSelection.call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
 
-    const scaleFactor = 0.9;
-    const marginX = (width * (1 - scaleFactor)) / 2;
-    const marginY = (height * (1 - scaleFactor)) / 2;
-    const projection = d3.geoMercator().fitSize([width * scaleFactor, height * scaleFactor], geoData);
-    
-    function ticked() {
-        nodeSelection.each(function(d) {
-            const invertedPoint = projection.invert([d.x - marginX, d.y - marginY]);
-            if (!d3.geoContains(geoData, invertedPoint)) {
-                d.x = d.px || d.x;
-                d.y = d.py || d.y;
-            }
-        });
+    const scaleFactor = 0.9;
+    const marginX = (width * (1 - scaleFactor)) / 2;
+    const marginY = (height * (1 - scaleFactor)) / 2;
+    const projection = d3.geoMercator().fitSize([width * scaleFactor, height * scaleFactor], geoData);
+    
+    function ticked() {
+        nodeSelection.each(function(d) {
+            const invertedPoint = projection.invert([d.x - marginX, d.y - marginY]);
+            if (!d3.geoContains(geoData, invertedPoint)) {
+                d.x = d.px || d.x;
+                d.y = d.py || d.y;
+            }
+        });
 
-        nodeSelection.attr("cx", d => d.x).attr("cy", d => d.y);
-    }
+        nodeSelection.attr("cx", d => d.x).attr("cy", d => d.y);
+    }
 
-    simulation.on("tick", ticked);
-    
-    sharedD3 = { simulation, nodeSelection, labelSelection, width, height };
+    simulation.on("tick", ticked);
+    
+    sharedD3 = { simulation, nodeSelection, labelSelection, width, height };
 }
 
 function updateLabels(labelData) {
-    sharedD3.labelSelection = sharedD3.labelSelection
-        .data(labelData, d => d.text)
-        .join(
-            enter => enter.append("text").attr("class", "group-label").attr("x", d => d.x).attr("y", d => d.y).text(d => d.text).attr("opacity", 0).call(enter => enter.transition().duration(800).attr("opacity", 1)),
-            update => update.call(update => update.transition().duration(800).attr("x", d => d.x).attr("y", d => d.y).attr("opacity", 1)),
-            exit => exit.call(exit => exit.transition().duration(400).attr("opacity", 0).remove())
-        )
-        .on("mouseover", function (event, d) { d3.select(this).text(`${d.percentage.toFixed(1)}%`).style("font-weight", "bold"); })
-        .on("mouseout", function (event, d) { d3.select(this).text(d.text).style("font-weight", "normal"); });
+    sharedD3.labelSelection = sharedD3.labelSelection
+        .data(labelData, d => d.text)
+        .join(
+            enter => enter.append("text").attr("class", "group-label").attr("x", d => d.x).attr("y", d => d.y).text(d => d.text).attr("opacity", 0).call(enter => enter.transition().duration(800).attr("opacity", 1)),
+            update => update.call(update => update.transition().duration(800).attr("x", d => d.x).attr("y", d => d.y).attr("opacity", 1)),
+            exit => exit.call(exit => exit.transition().duration(400).attr("opacity", 0).remove())
+        )
+        .on("mouseover", function (event, d) { d3.select(this).text(`${d.percentage.toFixed(1)}%`).style("font-weight", "bold"); })
+        .on("mouseout", function (event, d) { d3.select(this).text(d.text).style("font-weight", "normal"); });
 }
 
 function transitionToInitial() {
-    sharedD3.simulation
-        .force("x", d3.forceX(d => d.initialX).strength(SETTINGS.forces.xStrength))
-        .force("y", d3.forceY(d => d.initialY).strength(SETTINGS.forces.yStrength))
-        .alpha(1).restart();
-    // ✨ ALTERAÇÃO AQUI: A cor foi trocada de cinza para verde. ✨
-    sharedD3.nodeSelection.transition().duration(800).attr("fill", "#009E60");
-    updateLabels([]);
+    sharedD3.simulation
+        .force("x", d3.forceX(d => d.initialX).strength(SETTINGS.forces.xStrength))
+        .force("y", d3.forceY(d => d.initialY).strength(SETTINGS.forces.yStrength))
+        .alpha(1).restart();
+    sharedD3.nodeSelection.transition().duration(800).attr("fill", "#009E60");
+    updateLabels([]);
 }
 
 function transitionToRace(percentages) {
-    const { simulation, nodeSelection, width, height } = sharedD3;
-    const raceScale = d3.scalePoint().domain(d3.range(SETTINGS.raceLabels.length)).range([width * 0.15, width * 0.85]);
-    simulation
-        .force("x", d3.forceX(d => raceScale(d.raceGroup)).strength(SETTINGS.forces.xStrength))
-        .force("y", d3.forceY(height / 2).strength(SETTINGS.forces.yStrength))
-        .alpha(1).restart();
-    nodeSelection.transition().duration(800).attr("fill", d => SETTINGS.raceColors[d.raceGroup]);
-    const labelData = SETTINGS.raceLabels.map((text, i) => ({ text, percentage: percentages[i], x: raceScale(i), y: height * 0.25 }));
-    updateLabels(labelData);
+    const { simulation, nodeSelection, width, height } = sharedD3;
+    const raceScale = d3.scalePoint().domain(d3.range(SETTINGS.raceLabels.length)).range([width * 0.15, width * 0.85]);
+    simulation
+        .force("x", d3.forceX(d => raceScale(d.raceGroup)).strength(SETTINGS.forces.xStrength))
+        .force("y", d3.forceY(height / 2).strength(SETTINGS.forces.yStrength))
+        .alpha(1).restart();
+    nodeSelection.transition().duration(800).attr("fill", d => SETTINGS.raceColors[d.raceGroup]);
+    const labelData = SETTINGS.raceLabels.map((text, i) => ({ text, percentage: percentages[i], x: raceScale(i), y: height * 0.25 }));
+    updateLabels(labelData);
 }
 
 function transitionToAge(percentages) {
+    const { simulation, nodeSelection, width, height } = sharedD3;
+    const ageScale = d3.scalePoint().domain(d3.range(SETTINGS.ageLabels.length)).range([width * 0.1, width * 0.9]);
+    simulation
+        .force("x", d3.forceX(d => ageScale(d.ageGroup)).strength(SETTINGS.forces.xStrength))
+        .force("y", d3.forceY(height / 2).strength(SETTINGS.forces.yStrength))
+        .alpha(1).restart();
+    nodeSelection.transition().duration(800).attr("fill", d => SETTINGS.raceColors[d.raceGroup]);
+    const labelData = SETTINGS.ageLabels.map((text, i) => ({ text, percentage: percentages[i], x: ageScale(i), y: height * 0.25 }));
+    updateLabels(labelData);
+}
+
+// FUNÇÃO ATUALIZADA
+function transitionToAgePyramid(processedData) {
     const { simulation, nodeSelection, width, height } = sharedD3;
-    const ageScale = d3.scalePoint().domain(d3.range(SETTINGS.ageLabels.length)).range([width * 0.1, width * 0.9]);
+    const counts = processedData.finalCounts.age;
+    const pyramidLayout = [];
+    const rowHeight = 45; // Aumentado para melhor espaçamento
+    const nodeSpacing = SETTINGS.node.radius * 2.5;
+
+    // ✨ CORREÇÃO AQUI: Calcula a altura total da pirâmide para centralizá-la
+    const totalPyramidHeight = (counts.length - 1) * rowHeight;
+    // Define a posição Y da BASE da pirâmide para que o conjunto fique centralizado
+    let currentY = (height / 2) + (totalPyramidHeight / 2);
+
+    // Cria o layout da pirâmide (de baixo para cima, como antes)
+    for (let i = 0; i < counts.length; i++) {
+        const numNodes = counts[i];
+        const rowWidth = numNodes * nodeSpacing;
+        const startX = (width - rowWidth) / 2;
+        pyramidLayout.push({
+            y: currentY,
+            startX: startX,
+            count: numNodes
+        });
+        currentY -= rowHeight; // Move para a linha de cima
+    }
+
+    // Associa cada nó a uma posição na pirâmide
+    for (let ageGroup = 0; ageGroup < pyramidLayout.length; ageGroup++) {
+        const layout = pyramidLayout[ageGroup];
+        const nodesInGroup = processedData.nodes.filter(n => n.ageGroup === ageGroup);
+        for(let i = 0; i < nodesInGroup.length; i++) {
+            nodesInGroup[i].targetX = layout.startX + i * nodeSpacing;
+            nodesInGroup[i].targetY = layout.y;
+        }
+    }
+
     simulation
-        .force("x", d3.forceX(d => ageScale(d.ageGroup)).strength(SETTINGS.forces.xStrength))
-        .force("y", d3.forceY(height / 2).strength(SETTINGS.forces.yStrength))
+        .force("x", d3.forceX(d => d.targetX).strength(SETTINGS.forces.xStrength))
+        .force("y", d3.forceY(d => d.targetY).strength(SETTINGS.forces.yStrength))
         .alpha(1).restart();
-    nodeSelection.transition().duration(800).attr("fill", d => SETTINGS.ageColors[d.ageGroup]);
-    const labelData = SETTINGS.ageLabels.map((text, i) => ({ text, percentage: percentages[i], x: ageScale(i), y: height * 0.25 }));
+
+    nodeSelection.transition().duration(800).attr("fill", d => SETTINGS.raceColors[d.raceGroup]);
+
+    // Atualiza os rótulos para alinhá-los com as novas posições
+    const labelData = SETTINGS.ageLabels.map((text, i) => ({
+        text: text,
+        percentage: processedData.percentages.age[i],
+        x: width - 70, 
+        y: pyramidLayout[i].y
+    }));
     updateLabels(labelData);
 }
 
+
 function transitionToLiteracy(percentages) {
-    const { simulation, nodeSelection, width, height } = sharedD3;
-    const literacyLabels = ["Alfabetizados", "Não Alfabetizados"];
-    simulation
-        .force("x", d3.forceX(width / 2).strength(SETTINGS.forces.xStrength))
-        .force("y", d3.forceY(height / 2).strength(SETTINGS.forces.yStrength))
-        .alpha(1).restart();
-    nodeSelection.transition().duration(800).attr("fill", d => SETTINGS.literacyColors[d.literacyGroup]);
-    const labelData = literacyLabels.map((text, i) => ({ text, percentage: percentages[i], x: width / 2, y: i === 0 ? height * 0.25 : height * 0.75 }));
-    updateLabels(labelData);
+    const { simulation, nodeSelection, width, height } = sharedD3;
+    const literacyLabels = ["Alfabetizados", "Não Alfabetizados"];
+    simulation
+        .force("x", d3.forceX(width / 2).strength(SETTINGS.forces.xStrength))
+        .force("y", d3.forceY(height / 2).strength(SETTINGS.forces.yStrength))
+        .alpha(1).restart();
+    nodeSelection.transition().duration(800).attr("fill", d => SETTINGS.literacyColors[d.literacyGroup]);
+    const labelData = literacyLabels.map((text, i) => ({ text, percentage: percentages[i], x: width / 2, y: i === 0 ? height * 0.25 : height * 0.75 }));
+    updateLabels(labelData);
 }
 
 function setupObserver(processedData) {
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const step = entry.target.id;
-                if (step === 'step-initial') transitionToInitial();
-                else if (step === 'step-race') transitionToRace(processedData.percentages.race);
-                else if (step === 'step-age') transitionToAge(processedData.percentages.age);
-                else if (step === 'step-literacy') transitionToLiteracy(processedData.percentages.literacy);
-            }
-        });
-    }, { threshold: 0.65 });
-    document.querySelectorAll('.step').forEach(step => observer.observe(step));
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const step = entry.target.id;
+                if (step === 'step-initial') transitionToInitial();
+                else if (step === 'step-race') transitionToRace(processedData.percentages.race);
+                else if (step === 'step-age') transitionToAge(processedData.percentages.age);
+                else if (step === 'step-age-pyramid') transitionToAgePyramid(processedData);
+                else if (step === 'step-literacy') transitionToLiteracy(processedData.percentages.literacy);
+            }
+        });
+    }, { threshold: 0.65 });
+    document.querySelectorAll('.step').forEach(step => observer.observe(step));
 }
 
 Promise.all([
-    d3.csv("data/ibge.csv", d3.autoType),
-    d3.json("data/brasil_simple_shape.json")
+    d3.csv("data/ibge.csv", d3.autoType),
+    d3.json("data/brasil_simple_shape.json")
 ]).then(([data, geoData]) => {
-    const processedData = processData(data);
-    
-    const width = d3Viz.node().getBoundingClientRect().width;
-    const height = d3Viz.node().getBoundingClientRect().height;
+    const processedData = processData(data);
+    
+    const width = d3Viz.node().getBoundingClientRect().width;
+    const height = d3Viz.node().getBoundingClientRect().height;
 
-    assignInitialPositions(processedData.nodes, geoData, width, height);
-    
-    initializeVisualization(processedData.nodes, geoData);
-    setupObserver(processedData);
-    
-    transitionToInitial();
+    assignInitialPositions(processedData.nodes, geoData, width, height);
+    
+    initializeVisualization(processedData.nodes, geoData);
+    setupObserver(processedData);
+    
+    transitionToInitial();
 }).catch(error => {
-    console.error("Erro ao carregar os dados. Verifique se os arquivos 'ibge.csv' e 'brasil_simple_shape.json' estão na pasta 'data'.", error);
+    console.error("Erro ao carregar os dados. Verifique se os arquivos 'ibge.csv' e 'brasil_simple_shape.json' estão na pasta 'data'.", error);
 });
 

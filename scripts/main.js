@@ -4,75 +4,73 @@ const d3Viz = d3.select("#d3-viz");
 let sharedD3 = {};
 
 function assignInitialPositions(nodes, geoData, width, height) {
-    // AJUSTE: O scaleFactor foi ajustado para 0.9 para melhor visualização e consistência.
-    const scaleFactor = 0.3;
-    const marginX = (width * (1 - scaleFactor)) / 2;
-    const marginY = (height * (1 - scaleFactor)) / 2;
+  // AJUSTE: O scaleFactor foi ajustado para 0.9 para melhor visualização e consistência.
+  const scaleFactor = 0.3;
+  const marginX = (width * (1 - scaleFactor)) / 2;
+  const marginY = (height * (1 - scaleFactor)) / 2;
 
-    const projection = d3.geoMercator()
-        .fitSize([width * scaleFactor, height * scaleFactor], geoData);
-    
-    const bounds = d3.geoBounds(geoData);
+  const projection = d3
+    .geoMercator()
+    .fitSize([width * scaleFactor, height * scaleFactor], geoData);
+  const bounds = d3.geoBounds(geoData);
 
-    let gridPoints = [];
-    let step = 3.0;
+  let gridPoints = [];
+  let step = 3.0;
 
-    while (gridPoints.length < 100) {
-        gridPoints = [];
-        step *= 0.95;
+  while (gridPoints.length < 100) {
+    gridPoints = [];
+    step *= 0.95;
 
-        if (step < 0.05) {
-            console.error("Não foi possível gerar 100 pontos para o grid.");
-            nodes.forEach(node => {
-                node.initialX = Math.random() * width;
-                node.initialY = Math.random() * height;
-            });
-            return;
-        }
-
-        for (let lat = bounds[1][1]; lat >= bounds[0][1]; lat -= step) {
-            for (let lon = bounds[0][0]; lon <= bounds[1][0]; lon += step) {
-                if (d3.geoContains(geoData, [lon, lat])) {
-                    gridPoints.push([lon, lat]);
-                }
-            }
-        }
+    if (step < 0.05) {
+      console.error("Não foi possível gerar 100 pontos para o grid.");
+      nodes.forEach((node) => {
+        node.initialX = Math.random() * width;
+        node.initialY = Math.random() * height;
+      });
+      return;
     }
 
-    function selectEvenly(array, count) {
-        const result = [];
-        const total = array.length;
-        if (total < count) return array;
-        const interval = total / count;
-        for (let i = 0; i < count; i++) {
-            result.push(array[Math.floor(i * interval)]);
+    for (let lat = bounds[1][1]; lat >= bounds[0][1]; lat -= step) {
+      for (let lon = bounds[0][0]; lon <= bounds[1][0]; lon += step) {
+        if (d3.geoContains(geoData, [lon, lat])) {
+          gridPoints.push([lon, lat]);
         }
-        return result;
+      }
     }
-    const finalGridPoints = selectEvenly(gridPoints, 100);
+  }
 
-    function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
+  function selectEvenly(array, count) {
+    const result = [];
+    const total = array.length;
+    if (total < count) return array;
+    const interval = total / count;
+    for (let i = 0; i < count; i++) {
+      result.push(array[Math.floor(i * interval)]);
     }
-    
-    shuffleArray(finalGridPoints);
+    return result;
+  }
+  const finalGridPoints = selectEvenly(gridPoints, 100);
 
-    nodes.forEach((node, i) => {
-        if (finalGridPoints[i]) {
-            const point = projection(finalGridPoints[i]);
-            node.initialX = point[0] + marginX;
-            node.initialY = point[1] + marginY;
-        } else {
-            node.initialX = width / 2;
-            node.initialY = height / 2;
-        }
-    });
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+  shuffleArray(finalGridPoints);
+
+  nodes.forEach((node, i) => {
+    if (finalGridPoints[i]) {
+      const point = projection(finalGridPoints[i]);
+      node.initialX = point[0] + marginX;
+      node.initialY = point[1] + marginY;
+    } else {
+      node.initialX = width / 2;
+      node.initialY = height / 2;
+    }
+  });
 }
 
-// A função processData permanece exatamente a mesma.
 function processData(data) {
   const totals = {
     race: new Array(5).fill(0),
@@ -204,7 +202,8 @@ function processData(data) {
       literacy_by_age_idx = 0;
     }
     n.literacyByAgeGroup = lba_i;
-    n.isLiterate = literacy_by_age_idx + 1 < (percentages.literacyByAge[lba_i] / 4)
+    n.isLiterate =
+      literacy_by_age_idx + 1 < percentages.literacyByAge[lba_i] / 4;
     literacy_by_age_idx++;
   });
 
@@ -212,61 +211,77 @@ function processData(data) {
 }
 
 function initializeVisualization(nodeData, geoData) {
-    const width = d3Viz.node().getBoundingClientRect().width;
-    const height = d3Viz.node().getBoundingClientRect().height;
-    const svg = d3Viz.append("svg").attr("width", width).attr("height", height);
+  const width = d3Viz.node().getBoundingClientRect().width;
+  const height = d3Viz.node().getBoundingClientRect().height;
+  const svg = d3Viz.append("svg").attr("width", width).attr("height", height);
 
-    nodeData.forEach((node) => {
-        node.x = node.initialX;
-        node.y = node.initialY;
+  nodeData.forEach((node) => {
+    node.x = node.initialX;
+    node.y = node.initialY;
+  });
+
+  const simulation = d3
+    .forceSimulation(nodeData)
+    .velocityDecay(SETTINGS.forces.velocityDecay)
+    .alphaDecay(SETTINGS.forces.alphaDecay)
+    .force(
+      "collision",
+      d3
+        .forceCollide()
+        .radius(SETTINGS.forces.collideRadius)
+        .strength(SETTINGS.forces.collideStrength)
+    );
+
+  const nodeSelection = svg
+    .append("g")
+    .selectAll("circle")
+    .data(nodeData)
+    .join("circle")
+    .attr("r", SETTINGS.node.radius)
+    .attr("stroke", SETTINGS.node.stroke)
+    .attr("stroke-width", SETTINGS.node.strokeWidth);
+
+  const labelSelection = svg.append("g").selectAll(".group-label");
+
+  function dragstarted(event, d) {
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x;
+    d.fy = d.y;
+  }
+  function dragged(event, d) {
+    d.fx = event.x;
+    d.fy = event.y;
+  }
+  function dragended(event, d) {
+    if (!event.active) simulation.alphaTarget(0);
+    d.fx = null;
+    d.fy = null;
+  }
+
+  nodeSelection.call(
+    d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended)
+  );
+
+  const scaleFactor = 0.9;
+  const marginX = (width * (1 - scaleFactor)) / 2;
+  const marginY = (height * (1 - scaleFactor)) / 2;
+  const projection = d3
+    .geoMercator()
+    .fitSize([width * scaleFactor, height * scaleFactor], geoData);
+  function ticked() {
+    nodeSelection.each(function (d) {
+      const invertedPoint = projection.invert([d.x - marginX, d.y - marginY]);
+      if (!d3.geoContains(geoData, invertedPoint)) {
+        d.x = d.px || d.x;
+        d.y = d.py || d.y;
+      }
     });
 
-    const simulation = d3.forceSimulation(nodeData)
-        .velocityDecay(SETTINGS.forces.velocityDecay)
-        .alphaDecay(SETTINGS.forces.alphaDecay)
-        .force("collision", d3.forceCollide().radius(SETTINGS.forces.collideRadius).strength(SETTINGS.forces.collideStrength));
+    nodeSelection.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
+  }
 
-    const nodeSelection = svg.append("g").selectAll("circle").data(nodeData).join("circle")
-        .attr("r", SETTINGS.node.radius)
-        .attr("stroke", SETTINGS.node.stroke)
-        .attr("stroke-width", SETTINGS.node.strokeWidth);
-
-    const labelSelection = svg.append("g").selectAll(".group-label");
-
-    function dragstarted(event, d) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
-        d.fx = d.x; d.fy = d.y;
-    }
-    function dragged(event, d) {
-        d.fx = event.x; d.fy = event.y;
-    }
-    function dragended(event, d) {
-        if (!event.active) simulation.alphaTarget(0);
-        d.fx = null; d.fy = null;
-    }
-
-    nodeSelection.call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
-
-    const scaleFactor = 0.9;
-    const marginX = (width * (1 - scaleFactor)) / 2;
-    const marginY = (height * (1 - scaleFactor)) / 2;
-    const projection = d3.geoMercator().fitSize([width * scaleFactor, height * scaleFactor], geoData);
-    
-    function ticked() {
-        nodeSelection.each(function(d) {
-            const invertedPoint = projection.invert([d.x - marginX, d.y - marginY]);
-            if (!d3.geoContains(geoData, invertedPoint)) {
-                d.x = d.px || d.x;
-                d.y = d.py || d.y;
-            }
-        });
-
-        nodeSelection.attr("cx", d => d.x).attr("cy", d => d.y);
-    }
-
-    simulation.on("tick", ticked);
-    
-    sharedD3 = { simulation, nodeSelection, labelSelection, width, height };
+  simulation.on("tick", ticked);
+  sharedD3 = { simulation, nodeSelection, labelSelection, width, height };
 }
 
 function updateLabels(labelData) {
@@ -297,8 +312,7 @@ function updateLabels(labelData) {
         )
     )
     .on("mouseover", function (event, d) {
-      d3.select(this)
-        .text(`${d.percentage.toFixed(1)}%`)
+      d3.select(this).text(`${d.percentage.toFixed(1)}%`);
     })
     .on("mouseout", function (event, d) {
       d3.select(this).text(d.text);
@@ -306,13 +320,19 @@ function updateLabels(labelData) {
 }
 
 function transitionToInitial() {
-    sharedD3.simulation
-        .force("x", d3.forceX(d => d.initialX).strength(SETTINGS.forces.xStrength))
-        .force("y", d3.forceY(d => d.initialY).strength(SETTINGS.forces.yStrength))
-        .alpha(1).restart();
-    // ✨ ALTERAÇÃO AQUI: A cor foi trocada de cinza para verde. ✨
-    sharedD3.nodeSelection.transition().duration(800).attr("fill", "#009E60");
-    updateLabels([]);
+  sharedD3.simulation
+    .force(
+      "x",
+      d3.forceX((d) => d.initialX).strength(SETTINGS.forces.xStrength)
+    )
+    .force(
+      "y",
+      d3.forceY((d) => d.initialY).strength(SETTINGS.forces.yStrength)
+    )
+    .alpha(1)
+    .restart();
+  sharedD3.nodeSelection.transition().duration(800).attr("fill", "#009E60");
+  updateLabels([]);
 }
 
 function transitionToRace(percentages) {
@@ -344,33 +364,58 @@ function transitionToRace(percentages) {
   updateLabels(labelData);
 }
 
-function transitionToAge(percentages) {
+function transitionToAgePyramid(processedData) {
   const { simulation, nodeSelection, width, height } = sharedD3;
-  const ageScale = d3
-    .scalePoint()
-    .domain(d3.range(SETTINGS.ageLabels.length))
-    .range([width * 0.1, width * 0.9]);
+  const counts = processedData.finalCounts.age;
+  const pyramidLayout = [];
+  const rowHeight = 45;
+  const nodeSpacing = SETTINGS.node.radius * 2.5;
+
+  const totalPyramidHeight = (counts.length - 1) * rowHeight;
+  let currentY = height / 2 + totalPyramidHeight / 2;
+
+  for (let i = 0; i < counts.length; i++) {
+    const numNodes = counts[i];
+    const rowWidth = numNodes * nodeSpacing;
+    const startX = (width - rowWidth) / 2;
+    pyramidLayout.push({
+      y: currentY,
+      startX: startX,
+      count: numNodes,
+    });
+    currentY -= rowHeight;
+  }
+
+  for (let ageGroup = 0; ageGroup < pyramidLayout.length; ageGroup++) {
+    const layout = pyramidLayout[ageGroup];
+    const nodesInGroup = processedData.nodes.filter(
+      (n) => n.ageGroup === ageGroup
+    );
+    for (let i = 0; i < nodesInGroup.length; i++) {
+      nodesInGroup[i].targetX = layout.startX + i * nodeSpacing;
+      nodesInGroup[i].targetY = layout.y;
+    }
+  }
+
   simulation
-    .force(
-      "x",
-      d3.forceX((d) => ageScale(d.ageGroup)).strength(SETTINGS.forces.xStrength)
-    )
-    .force("y", d3.forceY(height / 2).strength(SETTINGS.forces.yStrength))
+    .force("x", d3.forceX((d) => d.targetX).strength(SETTINGS.forces.xStrength))
+    .force("y", d3.forceY((d) => d.targetY).strength(SETTINGS.forces.yStrength))
     .alpha(1)
     .restart();
+
   nodeSelection
     .transition()
     .duration(800)
     .attr("fill", (d) => SETTINGS.ageColors[d.ageGroup]);
+
   const labelData = SETTINGS.ageLabels.map((text, i) => ({
-    text,
-    percentage: percentages[i],
-    x: ageScale(i),
-    y: height * 0.25,
+    text: text,
+    percentage: processedData.percentages.age[i],
+    x: width - 70,
+    y: pyramidLayout[i].y,
   }));
   updateLabels(labelData);
 }
-
 
 function transitionToLiteracy(percentages) {
   const { simulation, nodeSelection, width, height } = sharedD3;
@@ -418,7 +463,7 @@ function transitionToLiteracyByAge(percentages) {
     text,
     percentage: percentages[i],
     x: ageScale(i),
-    y: height * 0.25
+    y: height * 0.25,
   }));
   updateLabels(labelData);
 }
@@ -436,6 +481,8 @@ function setupObserver(processedData) {
               return transitionToRace(processedData.percentages.race);
             case "step-age":
               return transitionToAge(processedData.percentages.age);
+            case "step-age-pyramid":
+              return transitionToAgePyramid(processedData);
             case "step-literacy":
               return transitionToLiteracy(processedData.percentages.literacy);
             case "step-literacy-age":
@@ -452,20 +499,22 @@ function setupObserver(processedData) {
 }
 
 Promise.all([
-    d3.csv("data/ibge.csv", d3.autoType),
-    d3.json("data/brasil_simple_shape.json")
-]).then(([data, geoData]) => {
+  d3.csv("data/ibge.csv", d3.autoType),
+  d3.json("data/brasil_simple_shape.json"),
+])
+  .then(([data, geoData]) => {
     const processedData = processData(data);
-    
     const width = d3Viz.node().getBoundingClientRect().width;
     const height = d3Viz.node().getBoundingClientRect().height;
 
     assignInitialPositions(processedData.nodes, geoData, width, height);
-    
     initializeVisualization(processedData.nodes, geoData);
     setupObserver(processedData);
-    
     transitionToInitial();
-}).catch(error => {
-    console.error("Erro ao carregar os dados. Verifique se os arquivos 'ibge.csv' e 'brasil_simple_shape.json' estão na pasta 'data'.", error);
-});
+  })
+  .catch((error) => {
+    console.error(
+      "Erro ao carregar os dados. Verifique se os arquivos 'ibge.csv' e 'brasil_simple_shape.json' estão na pasta 'data'.",
+      error
+    );
+  });

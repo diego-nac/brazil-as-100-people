@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="style/index.css">
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 </head>
+
 <body>
     <div id="visualization-container">
         <div id="d3-viz"></div>
@@ -20,19 +22,25 @@
             <h2>Distribuição por Raça/Cor</h2>
             <p>Os pontos se agrupam de acordo com a autodeclaração de raça/cor, segundo o IBGE. As cores representam cada um dos cinco grupos principais.</p>
         </section>
-        <section class="step" id="step-age">
-            <h2>Distribuição por Faixa Etária</h2>
-            <p>Agora, os mesmos pontos são reorganizados por grandes faixas etárias. As cores originais de raça são mantidas para mostrar a composição interna de cada grupo de idade.</p>
+        
+        <section class="step" id="step-age-pyramid">
+            <h2>Pirâmide Etária com Composição Racial</h2>
+            <p>Os 100 pontos se organizam para formar uma pirâmide etária. As faixas etárias mais jovens (e mais
+                populosas) formam a base larga da pirâmide, e as faixas mais velhas (menos populosas) formam o topo
+                estreito. Crucialmente, cada ponto mantém a cor original de sua raça.</p>
         </section>
-         <section class="step" id="step-literacy">
+        <section class="step" id="step-literacy">
             <h2>Taxa de Alfabetização</h2>
-            <p>Finalmente, os pontos cinzas representam os 7% da população com 15 anos ou mais que não são alfabetizados. Os pontos coloridos representam os 93% alfabetizados.</p>
+            <p>Finalmente, os pontos cinzas representam os 7% da população com 15 anos ou mais que não são
+                alfabetizados. Os pontos coloridos representam os 93% alfabetizados.</p>
         </section>
-         <section class="step" id="step-literacy-age">
+        <section class="step" id="step-literacy-age">
             <h2>Taxa de Alfabetização por Faixa Etária</h2>
-            <p>Agora, dividindo os alfabetizados por faixa etária, vemos claramente uma tendência dos mais velhos de serem menos alfabetizados, acentuando-se para os brasileiros 70+.</p>
+            <p>Agora, dividindo os alfabetizados por faixa etária, vemos claramente uma tendência dos mais velhos de
+                serem menos alfabetizados, acentuando-se para os brasileiros 70+.</p>
         </section>
     </div>
     <script type="module" src="scripts/main.js"></script>
 </body>
+
 </html>
