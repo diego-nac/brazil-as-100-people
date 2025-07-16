@@ -284,6 +284,17 @@ function initializeVisualization(nodeData, geoData) {
   sharedD3 = { simulation, nodeSelection, labelSelection, width, height };
 }
 
+function reapplyCollision() {
+  const { simulation } = sharedD3;
+  simulation.force(
+    "collision",
+    d3
+      .forceCollide()
+      .radius(SETTINGS.forces.collideRadius)
+      .strength(SETTINGS.forces.collideStrength)
+  )
+}
+
 function updateLabels(labelData) {
   sharedD3.labelSelection = sharedD3.labelSelection
     .data(labelData, (d) => d.text)
@@ -400,6 +411,7 @@ function transitionToAgePyramid(processedData) {
   simulation
     .force("x", d3.forceX((d) => d.targetX).strength(SETTINGS.forces.xStrength))
     .force("y", d3.forceY((d) => d.targetY).strength(SETTINGS.forces.yStrength))
+    .force("collision", null)
     .alpha(1)
     .restart();
 
@@ -471,6 +483,7 @@ function transitionToLiteracyByAge(percentages) {
 function setupObserver(processedData) {
   const observer = new IntersectionObserver(
     (entries) => {
+      reapplyCollision();
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           const step = entry.target.id;

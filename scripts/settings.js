@@ -22,7 +22,7 @@ const SETTINGS = {
         collideStrength: 1,
         xStrength: 0.1,
         yStrength: 0.1,
-        alphaDecay: 0.0228,
+        alphaDecay: 0.0114,
         velocityDecay: 0.4
     }
 };
