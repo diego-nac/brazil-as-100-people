@@ -12,6 +12,13 @@ const SETTINGS = {
         },
         percentages: [98, 95, 87, 68]
     },
+    gender: {
+        labels: ["Homens", "Mulheres"],
+        colors: {
+            male: "#2419CE",
+            female: "#fb64f4"
+        }
+    },
     node: {
         radius: 8,
         stroke: "rgba(255,255,255,0.8)",

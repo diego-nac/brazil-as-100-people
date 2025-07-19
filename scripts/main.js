@@ -77,6 +77,7 @@ function processData(data) {
     age: new Array(5).fill(0),
     literacy: [0, 0],
     literacyByAge: [0, 0, 0, 0],
+    gender: [0, 0]
   };
 
   data.forEach((d) => {
@@ -124,6 +125,9 @@ function processData(data) {
       d.alfabetizadas_60_64 +
       d.alfabetizadas_65_69;
     totals.literacyByAge[3] += d.alfabetizadas_70_79 + d.alfabetizadas_80_plus;
+
+    totals.gender[0] += d.sexo_masc;
+    totals.gender[1] += d.sexo_fem;
   });
 
   const percentages = {
@@ -133,6 +137,7 @@ function processData(data) {
     literacyByAge: totals.literacyByAge.map(
       (v, i) => (v / totals.age[i + 1]) * 100
     ),
+    gender: totals.gender.map((v) => (v / d3.sum(totals.gender)) * 100)
   };
 
   const adjustAndRoundTo100 = (percentages) => {
@@ -163,6 +168,7 @@ function processData(data) {
     age: adjustAndRoundTo100(percentages.age),
     literacy: adjustAndRoundTo100(percentages.literacy),
     literacyByAge: adjustAndRoundTo100(percentages.literacyByAge),
+    gender: adjustAndRoundTo100(percentages.gender)
   };
 
   const nodes = d3.range(100).map((id) => ({ id }));
@@ -170,11 +176,13 @@ function processData(data) {
   let r_i = 0,
     a_i = 0,
     l_i = 0,
-    lba_i = 0;
+    lba_i = 0,
+    g_i = 0;
   let race_idx = 0,
     age_idx = 0,
     literacy_idx = 0,
-    literacy_by_age_idx = 0;
+    literacy_by_age_idx = 0,
+    gender_index = 0;
   nodes.forEach((n) => {
     if (race_idx >= finalCounts.race[r_i]) {
       r_i++;
@@ -205,6 +213,13 @@ function processData(data) {
     n.isLiterate =
       literacy_by_age_idx + 1 < percentages.literacyByAge[lba_i] / 4;
     literacy_by_age_idx++;
+
+    if (gender_index >= finalCounts.gender[g_i]) {
+      g_i++;
+      gender_index = 0;
+    }
+    n.genderGroup = g_i;
+    gender_index++;
   });
 
   return { nodes, percentages, finalCounts };
@@ -302,11 +317,12 @@ function updateLabels(labelData) {
       (enter) =>
         enter
           .append("text")
-          .attr("class", "group-label")
+          .classed("group-label", true)
           .attr("x", (d) => d.x)
           .attr("y", (d) => d.y)
           .text((d) => d.text)
           .attr("opacity", 0)
+          .attr("fill", (d) => d.color ?? "#555")
           .call((enter) => enter.transition().duration(800).attr("opacity", 1)),
       (update) =>
         update.call((update) =>
@@ -446,6 +462,7 @@ function transitionToLiteracy(percentages) {
     percentage: percentages[i],
     x: width / 2,
     y: i === 0 ? height * 0.25 : height * 0.75,
+    color: SETTINGS.literacyColors[i]
   }));
   updateLabels(labelData);
 }
@@ -480,6 +497,66 @@ function transitionToLiteracyByAge(percentages) {
   updateLabels(labelData);
 }
 
+function transitionToGender(percentages, nodes) {
+  const { simulation, nodeSelection, width, height } = sharedD3;
+  const layout = [];
+  const nodeSpacing = SETTINGS.node.radius * 2.5;
+
+  const baseHeight = 8 * nodeSpacing;
+  let currentY = height / 2 - baseHeight / 2;
+
+  const labels = SETTINGS.gender.labels;
+  const scale = d3
+    .scalePoint()
+    .domain(d3.range(labels.length))
+    .range([width * 0.35, width * 0.65]);
+
+  for (let i = 0; i < percentages.length; i++) {
+    const numNodes = 8;
+    const rowWidth = numNodes * nodeSpacing;
+    const startX = scale(i) + nodeSpacing / 2 - (rowWidth / 2);
+    layout.push({
+      startY: currentY,
+      startX: startX,
+    });
+  }
+
+  for (let group = 0; group < layout.length; group++) {
+    const currentLayout = layout[group];
+    const nodesInGroup = nodes.filter(
+      (n) => n.genderGroup === group
+    );
+    let rowIndex = 0;
+    for (let i = 0; i < nodesInGroup.length; i++) {
+      nodesInGroup[i].targetX = currentLayout.startX + rowIndex * nodeSpacing;
+      nodesInGroup[i].targetY = currentLayout.startY + (Math.trunc(i / 8) * nodeSpacing);
+      rowIndex++;
+      if (rowIndex % 8 === 0) {
+        rowIndex = 0;
+      }
+    }
+  }
+
+  simulation
+    .force("x", d3.forceX((d) => d.targetX).strength(SETTINGS.forces.xStrength))
+    .force("y", d3.forceY((d) => d.targetY).strength(SETTINGS.forces.yStrength))
+    .force("collision", null)
+    .alpha(1)
+    .restart();
+
+  nodeSelection
+    .transition()
+    .duration(800)
+    .attr("fill", (d) => SETTINGS.gender.colors[d.genderGroup ? "female" : "male"]);
+  const labelData = labels.map((text, i) => ({
+    text,
+    percentage: percentages[i],
+    x: scale(i),
+    y: height * 0.25,
+  }));
+  updateLabels(labelData);
+}
+
 function setupObserver(processedData) {
   const observer = new IntersectionObserver(
     (entries) => {
@@ -501,6 +578,10 @@ function setupObserver(processedData) {
             case "step-literacy-age":
               return transitionToLiteracyByAge(
                 processedData.percentages.literacyByAge
+              );
+            case "step-gender":
+              return transitionToGender(
+                processedData.percentages.gender, processedData.nodes
               );
           }
         }
