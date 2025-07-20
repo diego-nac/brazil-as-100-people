@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="300" height="200" viewBox="0 0 300 200">
+  <!-- Borda externa verde -->
+  <rect x="0" y="0" width="300" height="200"
+        fill="none"
+        stroke="#006600"
+        stroke-width="3"/>
+  <!-- Borda do losango amarelo -->
+  <polygon points="150,25 275,100 150,175 25,100"
+           fill="none"
+           stroke="#FFCC00"
+           stroke-width="3"/>
+  <!-- Borda do círculo azul -->
+  <circle cx="150" cy="100" r="45"
+          fill="none"
+          stroke="#3E4095"
+          stroke-width="3"/>
+</svg>
