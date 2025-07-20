@@ -557,6 +557,85 @@ function transitionToGender(percentages, nodes) {
   updateLabels(labelData);
 }
 
+// ===== BLOCO DE CÓDIGO PARA ADICIONAR: BANDEIRA (APENAS LINHAS) =====
+function transitionToFlag(nodes) {
+    const { simulation, nodeSelection, width, height } = sharedD3;
+
+    // 1. Geometria e Escala da Bandeira
+    const svgWidth = 300;
+    const svgHeight = 200;
+    
+    // Altere este valor (ex: 0.8 para 80%, 0.6 para 60%) para redimensionar a bandeira.
+    const flagSizePercentage = 0.5; 
+    
+    const flagWidth = width * flagSizePercentage;
+    const flagHeight = (flagWidth * svgHeight) / svgWidth;
+    const marginX = (width - flagWidth) / 2;
+    const marginY = (height - flagHeight) / 2;
+    
+    const scaleX = d3.scaleLinear().domain([0, svgWidth]).range([marginX, marginX + flagWidth]);
+    const scaleY = d3.scaleLinear().domain([0, svgHeight]).range([marginY, marginY + flagHeight]);
+
+    // 2. Definição das Formas, Cores e Contagem Proporcional ao Perímetro
+    const counts = { green: 54, yellow: 31, blue: 15 }; // Proporcional aos perímetros
+    const colors = SETTINGS.flag.colors;
+    const flagPoints = [];
+
+    // Função auxiliar para gerar pontos ao longo de um caminho poligonal
+    function generatePointsOnPath(vertices, numPoints, color) {
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const d = "M" + vertices.map(p => `${p.x},${p.y}`).join(" L ") + " Z";
+        path.setAttribute("d", d);
+
+        const totalLength = path.getTotalLength();
+        if (totalLength === 0) return;
+
+        for (let i = 0; i < numPoints; i++) {
+            const point = path.getPointAtLength(i * (totalLength / numPoints));
+            flagPoints.push({ x: scaleX(point.x), y: scaleY(point.y), color: color });
+        }
+    }
+
+    // 3. Geração dos Pontos sobre as Linhas de Cada Forma
+    const rectVertices = [ {x:0, y:0}, {x:300, y:0}, {x:300, y:200}, {x:0, y:200} ];
+    generatePointsOnPath(rectVertices, counts.green, colors.green);
+
+    const rhombusVertices = [ {x:150, y:25}, {x:275, y:100}, {x:150, y:175}, {x:25, y:100} ];
+    generatePointsOnPath(rhombusVertices, counts.yellow, colors.yellow);
+
+    const circleDef = { cx: 150, cy: 100, r: 45 };
+    for (let i = 0; i < counts.blue; i++) {
+        const angle = (i / counts.blue) * 2 * Math.PI;
+        const x = circleDef.cx + circleDef.r * Math.cos(angle);
+        const y = circleDef.cy + circleDef.r * Math.sin(angle);
+        flagPoints.push({ x: scaleX(x), y: scaleY(y), color: colors.blue });
+    }
+
+    // 4. Atribuição de Posições e Atualização da Visualização
+    d3.shuffle(flagPoints);
+    nodes.forEach((node, i) => {
+        if (flagPoints[i]) {
+            node.targetX = flagPoints[i].x;
+            node.targetY = flagPoints[i].y;
+            node.flagColor = flagPoints[i].color;
+        }
+    });
+
+    simulation
+        .force("x", d3.forceX(d => d.targetX).strength(SETTINGS.forces.xStrength))
+        .force("y", d3.forceY(d => d.targetY).strength(SETTINGS.forces.yStrength))
+        .force("collision", null)
+        .alpha(1)
+        .restart();
+    
+    nodeSelection
+        .transition()
+        .duration(800)
+        .attr("fill", d => d.flagColor || "grey");
+
+    updateLabels([]);
+}
+
 function setupObserver(processedData) {
   const observer = new IntersectionObserver(
     (entries) => {
@@ -583,6 +662,8 @@ function setupObserver(processedData) {
               return transitionToGender(
                 processedData.percentages.gender, processedData.nodes
               );
+            case "step-flag": // Etapa da bandeira adicionada
+              return transitionToFlag(processedData.nodes);
           }
         }
       });

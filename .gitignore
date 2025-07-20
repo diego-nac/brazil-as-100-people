@@ -1,2 +1,5 @@
 *.py
 ./conteudo_unificado.txt
+
+./saida.txt
+saida.txt

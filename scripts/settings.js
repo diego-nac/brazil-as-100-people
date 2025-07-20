@@ -31,6 +31,13 @@ const SETTINGS = {
         yStrength: 0.1,
         alphaDecay: 0.0114,
         velocityDecay: 0.4
-    }
+    },
+    flag: {
+        colors: {
+            green: "#009E60",
+            yellow: "#FFCC00",
+            blue: "#3E4095"
+        }
+},
 };
 export default SETTINGS;
