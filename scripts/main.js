@@ -707,7 +707,7 @@ function setupObserver(processedData) {
 }
 
 Promise.all([
-  d3.csv("data/ibge.csv", d3.autoType),
+  d3.csv("data/data.csv", d3.autoType),
   d3.json("data/brasil_simple_shape.json"),
 ])
   .then(([data, geoData]) => {
