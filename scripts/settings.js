@@ -15,8 +15,8 @@ const SETTINGS = {
     gender: {
         labels: ["Homens", "Mulheres"],
         colors: {
-            male: "#2419CE",
-            female: "#fb64f4"
+            male: "#948eddff",
+            female: "#ef9bebff"
         }
     },
     node: {

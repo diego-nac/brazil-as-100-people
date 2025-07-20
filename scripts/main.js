@@ -70,14 +70,14 @@ function assignInitialPositions(nodes, geoData, width, height) {
     }
   });
 }
-
 function processData(data) {
   const totals = {
     race: new Array(5).fill(0),
     age: new Array(5).fill(0),
     literacy: [0, 0],
     literacyByAge: [0, 0, 0, 0],
-    gender: [0, 0]
+    gender: [0, 0],
+    ageByGender: new Array(5).fill(0).map(() => ({ men: 0, women: 0 })),
   };
 
   data.forEach((d) => {
@@ -86,6 +86,7 @@ function processData(data) {
     totals.race[2] += d.raca_preta;
     totals.race[3] += d.raca_amarela;
     totals.race[4] += d.raca_indigena;
+    
     const age_0_14 = d.idade_0_4 + d.idade_5_9 + d.idade_10_14;
     const age_15_29 = d.idade_15_19 + d.idade_20_24 + d.idade_25_29;
     const age_30_49 = d.idade_30_39 + d.idade_40_49;
@@ -105,29 +106,44 @@ function processData(data) {
       d.alfabetizadas_70_79 +
       d.alfabetizadas_80_plus;
     const totalPop15Plus = age_15_29 + age_30_49 + age_50_69 + d.idade_70_plus;
+    
     totals.age[0] += age_0_14;
     totals.age[1] += age_15_29;
     totals.age[2] += age_30_49;
     totals.age[3] += age_50_69;
     totals.age[4] += d.idade_70_plus;
+    
     totals.literacy[0] += totalLiterate;
     totals.literacy[1] += totalPop15Plus - totalLiterate;
-    totals.literacyByAge[0] +=
-      d.alfabetizadas_15_19 + d.alfabetizadas_20_24 + d.alfabetizadas_25_29;
-    totals.literacyByAge[1] +=
-      d.alfabetizadas_30_34 +
-      d.alfabetizadas_35_39 +
-      d.alfabetizadas_40_44 +
-      d.alfabetizadas_45_49;
-    totals.literacyByAge[2] +=
-      d.alfabetizadas_50_54 +
-      d.alfabetizadas_55_59 +
-      d.alfabetizadas_60_64 +
-      d.alfabetizadas_65_69;
+    
+    totals.literacyByAge[0] += d.alfabetizadas_15_19 + d.alfabetizadas_20_24 + d.alfabetizadas_25_29;
+    totals.literacyByAge[1] += d.alfabetizadas_30_34 + d.alfabetizadas_35_39 + d.alfabetizadas_40_44 + d.alfabetizadas_45_49;
+    totals.literacyByAge[2] += d.alfabetizadas_50_54 + d.alfabetizadas_55_59 + d.alfabetizadas_60_64 + d.alfabetizadas_65_69;
     totals.literacyByAge[3] += d.alfabetizadas_70_79 + d.alfabetizadas_80_plus;
 
     totals.gender[0] += d.sexo_masc;
     totals.gender[1] += d.sexo_fem;
+
+    // Soma os totais de idade por gênero
+    const ageGroupsMen = [
+      d.idade_homem_0_4 + d.idade_homem_5_9 + d.idade_homem_10_14,
+      d.idade_homem_15_19 + d.idade_homem_20_24 + d.idade_homem_25_29,
+      d.idade_homem_30_39 + d.idade_homem_40_49,
+      d.idade_homem_50_59 + d.idade_homem_60_69,
+      d.idade_homem_70_plus,
+    ];
+    const ageGroupsWomen = [
+      d.idade_mulher_0_4 + d.idade_mulher_5_9 + d.idade_mulher_10_14,
+      d.idade_mulher_15_19 + d.idade_mulher_20_24 + d.idade_mulher_25_29,
+      d.idade_mulher_30_39 + d.idade_mulher_40_49,
+      d.idade_mulher_50_59 + d.idade_mulher_60_69,
+      d.idade_mulher_70_plus,
+    ];
+    
+    for (let i = 0; i < 5; i++) {
+        totals.ageByGender[i].men += ageGroupsMen[i];
+        totals.ageByGender[i].women += ageGroupsWomen[i];
+    }
   });
 
   const percentages = {
@@ -135,7 +151,7 @@ function processData(data) {
     age: totals.age.map((v) => (v / d3.sum(totals.age)) * 100),
     literacy: totals.literacy.map((v) => (v / d3.sum(totals.literacy)) * 100),
     literacyByAge: totals.literacyByAge.map(
-      (v, i) => (v / totals.age[i + 1]) * 100
+      (v, i) => (v / (totals.age[i + 1] || 1)) * 100 // Previne divisão por zero
     ),
     gender: totals.gender.map((v) => (v / d3.sum(totals.gender)) * 100)
   };
@@ -168,56 +184,47 @@ function processData(data) {
     age: adjustAndRoundTo100(percentages.age),
     literacy: adjustAndRoundTo100(percentages.literacy),
     literacyByAge: adjustAndRoundTo100(percentages.literacyByAge),
-    gender: adjustAndRoundTo100(percentages.gender)
+    gender: adjustAndRoundTo100(percentages.gender),
+    ageByGender: [],
   };
+
+  // Calcula a contagem de homens/mulheres para cada faixa etária dentro dos 100 pontos
+  finalCounts.age.forEach((totalDotsInAgeGroup, i) => {
+    const totalPeopleInAgeGroup = totals.ageByGender[i].men + totals.ageByGender[i].women;
+    if (totalPeopleInAgeGroup === 0) {
+        finalCounts.ageByGender.push({ men: 0, women: 0 });
+        return;
+    }
+    const menProportion = totals.ageByGender[i].men / totalPeopleInAgeGroup;
+    const menDots = Math.round(totalDotsInAgeGroup * menProportion);
+    const womenDots = totalDotsInAgeGroup - menDots;
+    finalCounts.ageByGender.push({ men: menDots, women: womenDots });
+  });
 
   const nodes = d3.range(100).map((id) => ({ id }));
 
-  let r_i = 0,
-    a_i = 0,
-    l_i = 0,
-    lba_i = 0,
-    g_i = 0;
-  let race_idx = 0,
-    age_idx = 0,
-    literacy_idx = 0,
-    literacy_by_age_idx = 0,
-    gender_index = 0;
+  let r_i = 0, a_i = 0, l_i = 0, lba_i = 0, g_i = 0;
+  let race_idx = 0, age_idx = 0, literacy_idx = 0, literacy_by_age_idx = 0, gender_index = 0;
+  
   nodes.forEach((n) => {
-    if (race_idx >= finalCounts.race[r_i]) {
-      r_i++;
-      race_idx = 0;
-    }
+    if (race_idx >= finalCounts.race[r_i]) { r_i++; race_idx = 0; }
     n.raceGroup = r_i;
     race_idx++;
 
-    if (age_idx >= finalCounts.age[a_i]) {
-      a_i++;
-      age_idx = 0;
-    }
+    if (age_idx >= finalCounts.age[a_i]) { a_i++; age_idx = 0; }
     n.ageGroup = a_i;
     age_idx++;
 
-    if (literacy_idx >= finalCounts.literacy[l_i]) {
-      l_i++;
-      literacy_idx = 0;
-    }
+    if (literacy_idx >= finalCounts.literacy[l_i]) { l_i++; literacy_idx = 0; }
     n.literacyGroup = l_i;
     literacy_idx++;
 
-    if (literacy_by_age_idx >= finalCounts.literacyByAge[lba_i]) {
-      lba_i++;
-      literacy_by_age_idx = 0;
-    }
+    if (literacy_by_age_idx >= finalCounts.literacyByAge[lba_i]) { lba_i++; literacy_by_age_idx = 0; }
     n.literacyByAgeGroup = lba_i;
-    n.isLiterate =
-      literacy_by_age_idx + 1 < percentages.literacyByAge[lba_i] / 4;
+    n.isLiterate = literacy_by_age_idx + 1 < percentages.literacyByAge[lba_i] / 4;
     literacy_by_age_idx++;
 
-    if (gender_index >= finalCounts.gender[g_i]) {
-      g_i++;
-      gender_index = 0;
-    }
+    if (gender_index >= finalCounts.gender[g_i]) { g_i++; gender_index = 0; }
     n.genderGroup = g_i;
     gender_index++;
   });
@@ -668,7 +675,63 @@ function transitionToFlag(nodes) {
 
     updateLabels([]);
 }
+// ===== BLOCO DE CÓDIGO PARA SUBSTITUIR: transitionToAgeGenderPyramid =====
+function transitionToAgeGenderPyramid(processedData) {
+  const { simulation, nodeSelection, width, height } = sharedD3;
+  
+  const ageGenderCounts = processedData.finalCounts.ageByGender;
+  const rowHeight = 45;
+  const nodeSpacing = SETTINGS.node.radius * 2.5;
+  const pyramidGap = SETTINGS.node.radius * 2;
 
+  const totalPyramidHeight = (ageGenderCounts.length - 1) * rowHeight;
+  let currentY = height / 2 + totalPyramidHeight / 2;
+
+  const allNodes = nodeSelection.data();
+
+  ageGenderCounts.forEach((group, i) => {
+    const menInGroup = allNodes.filter(n => n.ageGroup === i && n.genderGroup === 0);
+    const womenInGroup = allNodes.filter(n => n.ageGroup === i && n.genderGroup === 1);
+
+    // Layout para homens (à esquerda, partindo do centro para fora)
+    for (let j = 0; j < menInGroup.length; j++) {
+      menInGroup[j].targetX = (width / 2) - (pyramidGap / 2) - (j * nodeSpacing);
+      menInGroup[j].targetY = currentY;
+    }
+
+    // Layout para mulheres (à direita, partindo do centro para fora)
+    for (let j = 0; j < womenInGroup.length; j++) {
+      womenInGroup[j].targetX = (width / 2) + (pyramidGap / 2) + (j * nodeSpacing);
+      womenInGroup[j].targetY = currentY;
+    }
+    
+    currentY -= rowHeight;
+  });
+
+  simulation
+    .force("x", d3.forceX((d) => d.targetX).strength(SETTINGS.forces.xStrength))
+    .force("y", d3.forceY((d) => d.targetY).strength(SETTINGS.forces.yStrength))
+    .force("collision", null)
+    .alpha(1)
+    .restart();
+
+  nodeSelection
+    .transition()
+    .duration(800)
+    .attr("fill", (d) => SETTINGS.gender.colors[d.genderGroup === 0 ? "male" : "female"]);
+
+  const ageLabelsData = SETTINGS.ageLabels.map((text, i) => {
+      const yPos = (height / 2 + totalPyramidHeight / 2) - (i * rowHeight);
+      return { text: text, x: width / 2, y: yPos, color: '#555' };
+  });
+
+  const genderLabelsData = [
+      {text: "Homens", x: width/2 - pyramidGap - 50, y: height/2 - totalPyramidHeight/2 - 35},
+      {text: "Mulheres", x: width/2 + pyramidGap + 50, y: height/2 - totalPyramidHeight/2 - 35}
+  ];
+
+  updateLabels([...ageLabelsData, ...genderLabelsData]);
+}
 function setupObserver(processedData) {
   const observer = new IntersectionObserver(
     (entries) => {
@@ -685,6 +748,8 @@ function setupObserver(processedData) {
               return transitionToAge(processedData.percentages.age);
             case "step-age-pyramid":
               return transitionToAgePyramid(processedData);
+            case "step-age-gender-pyramid":
+              return transitionToAgeGenderPyramid(processedData);
             case "step-literacy":
               return transitionToLiteracy(processedData.percentages.literacy);
             case "step-literacy-age":
