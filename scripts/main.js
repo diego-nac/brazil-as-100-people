@@ -2,6 +2,7 @@ import SETTINGS from "./settings.js";
 
 const d3Viz = d3.select("#d3-viz");
 let sharedD3 = {};
+let onExitHandlers = [];
 
 function assignInitialPositions(nodes, geoData, width, height) {
   // AJUSTE: O scaleFactor foi ajustado para 0.9 para melhor visualização e consistência.
@@ -76,8 +77,7 @@ function processData(data) {
     age: new Array(5).fill(0),
     literacy: [0, 0],
     literacyByAge: [0, 0, 0, 0],
-    gender: [0, 0],
-    ageByGender: new Array(5).fill(0).map(() => ({ men: 0, women: 0 })),
+    ageByGender: new Array(6).fill(0).map(() => ({ men: 0, women: 0 })),
   };
 
   data.forEach((d) => {
@@ -86,7 +86,7 @@ function processData(data) {
     totals.race[2] += d.raca_preta;
     totals.race[3] += d.raca_amarela;
     totals.race[4] += d.raca_indigena;
-    
+
     const age_0_14 = d.idade_0_4 + d.idade_5_9 + d.idade_10_14;
     const age_15_29 = d.idade_15_19 + d.idade_20_24 + d.idade_25_29;
     const age_30_49 = d.idade_30_39 + d.idade_40_49;
@@ -106,23 +106,20 @@ function processData(data) {
       d.alfabetizadas_70_79 +
       d.alfabetizadas_80_plus;
     const totalPop15Plus = age_15_29 + age_30_49 + age_50_69 + d.idade_70_plus;
-    
+
     totals.age[0] += age_0_14;
     totals.age[1] += age_15_29;
     totals.age[2] += age_30_49;
     totals.age[3] += age_50_69;
     totals.age[4] += d.idade_70_plus;
-    
+
     totals.literacy[0] += totalLiterate;
     totals.literacy[1] += totalPop15Plus - totalLiterate;
-    
+
     totals.literacyByAge[0] += d.alfabetizadas_15_19 + d.alfabetizadas_20_24 + d.alfabetizadas_25_29;
     totals.literacyByAge[1] += d.alfabetizadas_30_34 + d.alfabetizadas_35_39 + d.alfabetizadas_40_44 + d.alfabetizadas_45_49;
     totals.literacyByAge[2] += d.alfabetizadas_50_54 + d.alfabetizadas_55_59 + d.alfabetizadas_60_64 + d.alfabetizadas_65_69;
     totals.literacyByAge[3] += d.alfabetizadas_70_79 + d.alfabetizadas_80_plus;
-
-    totals.gender[0] += d.sexo_masc;
-    totals.gender[1] += d.sexo_fem;
 
     // Soma os totais de idade por gênero
     const ageGroupsMen = [
@@ -139,10 +136,12 @@ function processData(data) {
       d.idade_mulher_50_59 + d.idade_mulher_60_69,
       d.idade_mulher_70_plus,
     ];
-    
+
     for (let i = 0; i < 5; i++) {
-        totals.ageByGender[i].men += ageGroupsMen[i];
-        totals.ageByGender[i].women += ageGroupsWomen[i];
+      totals.ageByGender[0].men += ageGroupsMen[i];
+      totals.ageByGender[i + 1].men += ageGroupsMen[i];
+      totals.ageByGender[0].women += ageGroupsWomen[i];
+      totals.ageByGender[i + 1].women += ageGroupsWomen[i];
     }
   });
 
@@ -153,7 +152,13 @@ function processData(data) {
     literacyByAge: totals.literacyByAge.map(
       (v, i) => (v / (totals.age[i + 1] || 1)) * 100 // Previne divisão por zero
     ),
-    gender: totals.gender.map((v) => (v / d3.sum(totals.gender)) * 100)
+    ageByGender: totals.ageByGender.map((v) => {
+      let totalPeopleInAgeGroup = v.men + v.women;
+      return {
+        men: (v.men / totalPeopleInAgeGroup) * 100,
+        women: (v.women / totalPeopleInAgeGroup) * 100
+      }
+    })
   };
 
   const adjustAndRoundTo100 = (percentages) => {
@@ -184,28 +189,26 @@ function processData(data) {
     age: adjustAndRoundTo100(percentages.age),
     literacy: adjustAndRoundTo100(percentages.literacy),
     literacyByAge: adjustAndRoundTo100(percentages.literacyByAge),
-    gender: adjustAndRoundTo100(percentages.gender),
     ageByGender: [],
   };
 
-  // Calcula a contagem de homens/mulheres para cada faixa etária dentro dos 100 pontos
-  finalCounts.age.forEach((totalDotsInAgeGroup, i) => {
-    const totalPeopleInAgeGroup = totals.ageByGender[i].men + totals.ageByGender[i].women;
+  totals.ageByGender.forEach((quantity, i) => {
+    const totalPeopleInAgeGroup = quantity.men + quantity.women;
     if (totalPeopleInAgeGroup === 0) {
-        finalCounts.ageByGender.push({ men: 0, women: 0 });
-        return;
+      finalCounts.ageByGender.push({ men: 0, women: 0 });
+      return;
     }
-    const menProportion = totals.ageByGender[i].men / totalPeopleInAgeGroup;
-    const menDots = Math.round(totalDotsInAgeGroup * menProportion);
-    const womenDots = totalDotsInAgeGroup - menDots;
+    const menProportion = quantity.men / totalPeopleInAgeGroup;
+    const menDots = Math.round(100 * menProportion);
+    const womenDots = 100 - menDots;
     finalCounts.ageByGender.push({ men: menDots, women: womenDots });
-  });
+  })
 
   const nodes = d3.range(100).map((id) => ({ id }));
 
   let r_i = 0, a_i = 0, l_i = 0, lba_i = 0, g_i = 0;
-  let race_idx = 0, age_idx = 0, literacy_idx = 0, literacy_by_age_idx = 0, gender_index = 0;
-  
+  let race_idx = 0, age_idx = 0, literacy_idx = 0, literacy_by_age_idx = 0;
+
   nodes.forEach((n) => {
     if (race_idx >= finalCounts.race[r_i]) { r_i++; race_idx = 0; }
     n.raceGroup = r_i;
@@ -223,10 +226,6 @@ function processData(data) {
     n.literacyByAgeGroup = lba_i;
     n.isLiterate = literacy_by_age_idx + 1 < percentages.literacyByAge[lba_i] / 4;
     literacy_by_age_idx++;
-
-    if (gender_index >= finalCounts.gender[g_i]) { g_i++; gender_index = 0; }
-    n.genderGroup = g_i;
-    gender_index++;
   });
 
   return { nodes, percentages, finalCounts };
@@ -329,7 +328,7 @@ function updateLabels(labelData) {
           .attr("y", (d) => d.y)
           .text((d) => d.text)
           .attr("opacity", 0)
-          .attr("fill", (d) => d.color ?? "#555")
+          .attr("fill", (d) => d.color ?? "#e0e0e0")
           .call((enter) => enter.transition().duration(800).attr("opacity", 1)),
       (update) =>
         update.call((update) =>
@@ -450,7 +449,7 @@ function transitionToAgePyramid(processedData) {
     y: pyramidLayout[i].y,
   }));
   updateLabels(labelData);
-}function transitionToLiteracy(percentages) {
+} function transitionToLiteracy(percentages) {
   const { simulation, nodeSelection, width, height } = sharedD3;
   const literacyLabels = ["Alfabetizados", "Não Alfabetizados"];
 
@@ -494,7 +493,7 @@ function transitionToAgePyramid(processedData) {
     .transition()
     .duration(800)
     .attr("fill", (d) => SETTINGS.literacyColors[d.literacyGroup]);
-  
+
   // 6. Aproxima as legendas.
   const labelData = literacyLabels.map((text, i) => ({
     text,
@@ -537,8 +536,9 @@ function transitionToLiteracyByAge(percentages) {
   updateLabels(labelData);
 }
 
-function transitionToGender(percentages, nodes) {
+function transitionToGender(data) {
   const { simulation, nodeSelection, width, height } = sharedD3;
+
   const layout = [];
   const nodeSpacing = SETTINGS.node.radius * 2.5;
 
@@ -551,7 +551,7 @@ function transitionToGender(percentages, nodes) {
     .domain(d3.range(labels.length))
     .range([width * 0.35, width * 0.65]);
 
-  for (let i = 0; i < percentages.length; i++) {
+  for (let i = 0; i < 2; i++) {
     const numNodes = 8;
     const rowWidth = numNodes * nodeSpacing;
     const startX = scale(i) + nodeSpacing / 2 - (rowWidth / 2);
@@ -561,25 +561,129 @@ function transitionToGender(percentages, nodes) {
     });
   }
 
-  for (let group = 0; group < layout.length; group++) {
-    const currentLayout = layout[group];
-    const nodesInGroup = nodes.filter(
-      (n) => n.genderGroup === group
-    );
-    let rowIndex = 0;
-    for (let i = 0; i < nodesInGroup.length; i++) {
-      nodesInGroup[i].targetX = currentLayout.startX + rowIndex * nodeSpacing;
-      nodesInGroup[i].targetY = currentLayout.startY + (Math.trunc(i / 8) * nodeSpacing);
-      rowIndex++;
-      if (rowIndex % 8 === 0) {
-        rowIndex = 0;
+  function setupNodes(counts, nodes, percentages) {
+    let i = 0;
+    Object.values(counts).forEach((quantity, genderGroup) => {
+      const currentLayout = layout[genderGroup];
+      let rowIndex = 0;
+      for (let groupIndex = 0; groupIndex < quantity; i++, groupIndex++) {
+        nodes[i].targetX = currentLayout.startX + rowIndex * nodeSpacing;
+        nodes[i].targetY = currentLayout.startY + (Math.trunc(groupIndex / 8) * nodeSpacing);
+        nodes[i].genderGroup = genderGroup;
+        rowIndex++;
+        if (rowIndex % 8 === 0) {
+          rowIndex = 0;
+        }
       }
+    })
+
+    simulation
+      .force("x", d3.forceX((d) => d.targetX).strength(SETTINGS.forces.xStrength))
+      .force("y", d3.forceY((d) => d.targetY).strength(SETTINGS.forces.yStrength))
+      .force("collision", null)
+      .alpha(1)
+      .restart();
+
+    nodeSelection
+      .transition()
+      .duration(800)
+      .attr("fill", (d) => SETTINGS.gender.colors[d.genderGroup ? "female" : "male"]);
+
+    const labelData = labels.map((text, i) => ({
+      text,
+      percentage: Object.values(percentages)[i],
+      x: scale(i),
+      y: height * 0.25,
+    }));
+    updateLabels(labelData);
+  }
+
+  const counts = data.finalCounts.ageByGender;
+  const percentages = data.percentages.ageByGender;
+
+
+  const selectDiv = d3Viz.append("div").attr("style", `position: absolute; top: ${height * 0.05}px; left: -${width * 0.5}px;`);
+
+  const t = d3.transition().duration(500);
+  selectDiv.transition(t).style("left", `${width * 0.05}px`)
+  selectDiv.append("label").attr("for", "age-range").classed("group-label", true).text("Selecione a faixa etária: ");
+  const selectElement = selectDiv.append("select").attr("id", "age-range");
+  const possibleValues = ["Todos", "0-14 anos", "15-29 anos", "30-49 anos", "50-69 anos", "70+ anos"];
+  selectElement.selectAll("option").data(possibleValues).join("option").attr("value", (d, i) => i).text(d => d);
+  selectElement.on("change", (d) => setupNodes(counts[d.target.value], data.nodes, percentages[d.target.value]));
+
+  setupNodes(counts[0], data.nodes, percentages[0]);
+
+  onExitHandlers.push(() => selectDiv.transition().duration(500).style("left", `-${width * 0.5}px`).remove());
+}
+
+// ===== BLOCO DE CÓDIGO PARA ADICIONAR: BANDEIRA (APENAS LINHAS) =====
+function transitionToFlag(nodes) {
+  const { simulation, nodeSelection, width, height } = sharedD3;
+
+  // 1. Geometria e Escala da Bandeira
+  const svgWidth = 300;
+  const svgHeight = 200;
+
+  // Altere este valor (ex: 0.8 para 80%, 0.6 para 60%) para redimensionar a bandeira.
+  const flagSizePercentage = 0.5;
+
+  const flagWidth = width * flagSizePercentage;
+  const flagHeight = (flagWidth * svgHeight) / svgWidth;
+  const marginX = (width - flagWidth) / 2;
+  const marginY = (height - flagHeight) / 2;
+
+  const scaleX = d3.scaleLinear().domain([0, svgWidth]).range([marginX, marginX + flagWidth]);
+  const scaleY = d3.scaleLinear().domain([0, svgHeight]).range([marginY, marginY + flagHeight]);
+
+  // 2. Definição das Formas, Cores e Contagem Proporcional ao Perímetro
+  const counts = { green: 54, yellow: 31, blue: 15 }; // Proporcional aos perímetros
+  const colors = SETTINGS.flag.colors;
+  const flagPoints = [];
+
+  // Função auxiliar para gerar pontos ao longo de um caminho poligonal
+  function generatePointsOnPath(vertices, numPoints, color) {
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    const d = "M" + vertices.map(p => `${p.x},${p.y}`).join(" L ") + " Z";
+    path.setAttribute("d", d);
+
+    const totalLength = path.getTotalLength();
+    if (totalLength === 0) return;
+
+    for (let i = 0; i < numPoints; i++) {
+      const point = path.getPointAtLength(i * (totalLength / numPoints));
+      flagPoints.push({ x: scaleX(point.x), y: scaleY(point.y), color: color });
     }
   }
 
+  // 3. Geração dos Pontos sobre as Linhas de Cada Forma
+  const rectVertices = [{ x: 0, y: 0 }, { x: 300, y: 0 }, { x: 300, y: 200 }, { x: 0, y: 200 }];
+  generatePointsOnPath(rectVertices, counts.green, colors.green);
+
+  const rhombusVertices = [{ x: 150, y: 25 }, { x: 275, y: 100 }, { x: 150, y: 175 }, { x: 25, y: 100 }];
+  generatePointsOnPath(rhombusVertices, counts.yellow, colors.yellow);
+
+  const circleDef = { cx: 150, cy: 100, r: 45 };
+  for (let i = 0; i < counts.blue; i++) {
+    const angle = (i / counts.blue) * 2 * Math.PI;
+    const x = circleDef.cx + circleDef.r * Math.cos(angle);
+    const y = circleDef.cy + circleDef.r * Math.sin(angle);
+    flagPoints.push({ x: scaleX(x), y: scaleY(y), color: colors.blue });
+  }
+
+  // 4. Atribuição de Posições e Atualização da Visualização
+  d3.shuffle(flagPoints);
+  nodes.forEach((node, i) => {
+    if (flagPoints[i]) {
+      node.targetX = flagPoints[i].x;
+      node.targetY = flagPoints[i].y;
+      node.flagColor = flagPoints[i].color;
+    }
+  });
+
   simulation
-    .force("x", d3.forceX((d) => d.targetX).strength(SETTINGS.forces.xStrength))
-    .force("y", d3.forceY((d) => d.targetY).strength(SETTINGS.forces.yStrength))
+    .force("x", d3.forceX(d => d.targetX).strength(SETTINGS.forces.xStrength))
+    .force("y", d3.forceY(d => d.targetY).strength(SETTINGS.forces.yStrength))
     .force("collision", null)
     .alpha(1)
     .restart();
@@ -587,98 +691,14 @@ function transitionToGender(percentages, nodes) {
   nodeSelection
     .transition()
     .duration(800)
-    .attr("fill", (d) => SETTINGS.gender.colors[d.genderGroup ? "female" : "male"]);
-  const labelData = labels.map((text, i) => ({
-    text,
-    percentage: percentages[i],
-    x: scale(i),
-    y: height * 0.25,
-  }));
-  updateLabels(labelData);
-}
+    .attr("fill", d => d.flagColor || "grey");
 
-// ===== BLOCO DE CÓDIGO PARA ADICIONAR: BANDEIRA (APENAS LINHAS) =====
-function transitionToFlag(nodes) {
-    const { simulation, nodeSelection, width, height } = sharedD3;
-
-    // 1. Geometria e Escala da Bandeira
-    const svgWidth = 300;
-    const svgHeight = 200;
-    
-    // Altere este valor (ex: 0.8 para 80%, 0.6 para 60%) para redimensionar a bandeira.
-    const flagSizePercentage = 0.5; 
-    
-    const flagWidth = width * flagSizePercentage;
-    const flagHeight = (flagWidth * svgHeight) / svgWidth;
-    const marginX = (width - flagWidth) / 2;
-    const marginY = (height - flagHeight) / 2;
-    
-    const scaleX = d3.scaleLinear().domain([0, svgWidth]).range([marginX, marginX + flagWidth]);
-    const scaleY = d3.scaleLinear().domain([0, svgHeight]).range([marginY, marginY + flagHeight]);
-
-    // 2. Definição das Formas, Cores e Contagem Proporcional ao Perímetro
-    const counts = { green: 54, yellow: 31, blue: 15 }; // Proporcional aos perímetros
-    const colors = SETTINGS.flag.colors;
-    const flagPoints = [];
-
-    // Função auxiliar para gerar pontos ao longo de um caminho poligonal
-    function generatePointsOnPath(vertices, numPoints, color) {
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        const d = "M" + vertices.map(p => `${p.x},${p.y}`).join(" L ") + " Z";
-        path.setAttribute("d", d);
-
-        const totalLength = path.getTotalLength();
-        if (totalLength === 0) return;
-
-        for (let i = 0; i < numPoints; i++) {
-            const point = path.getPointAtLength(i * (totalLength / numPoints));
-            flagPoints.push({ x: scaleX(point.x), y: scaleY(point.y), color: color });
-        }
-    }
-
-    // 3. Geração dos Pontos sobre as Linhas de Cada Forma
-    const rectVertices = [ {x:0, y:0}, {x:300, y:0}, {x:300, y:200}, {x:0, y:200} ];
-    generatePointsOnPath(rectVertices, counts.green, colors.green);
-
-    const rhombusVertices = [ {x:150, y:25}, {x:275, y:100}, {x:150, y:175}, {x:25, y:100} ];
-    generatePointsOnPath(rhombusVertices, counts.yellow, colors.yellow);
-
-    const circleDef = { cx: 150, cy: 100, r: 45 };
-    for (let i = 0; i < counts.blue; i++) {
-        const angle = (i / counts.blue) * 2 * Math.PI;
-        const x = circleDef.cx + circleDef.r * Math.cos(angle);
-        const y = circleDef.cy + circleDef.r * Math.sin(angle);
-        flagPoints.push({ x: scaleX(x), y: scaleY(y), color: colors.blue });
-    }
-
-    // 4. Atribuição de Posições e Atualização da Visualização
-    d3.shuffle(flagPoints);
-    nodes.forEach((node, i) => {
-        if (flagPoints[i]) {
-            node.targetX = flagPoints[i].x;
-            node.targetY = flagPoints[i].y;
-            node.flagColor = flagPoints[i].color;
-        }
-    });
-
-    simulation
-        .force("x", d3.forceX(d => d.targetX).strength(SETTINGS.forces.xStrength))
-        .force("y", d3.forceY(d => d.targetY).strength(SETTINGS.forces.yStrength))
-        .force("collision", null)
-        .alpha(1)
-        .restart();
-    
-    nodeSelection
-        .transition()
-        .duration(800)
-        .attr("fill", d => d.flagColor || "grey");
-
-    updateLabels([]);
+  updateLabels([]);
 }
 // ===== BLOCO DE CÓDIGO PARA SUBSTITUIR: transitionToAgeGenderPyramid =====
 function transitionToAgeGenderPyramid(processedData) {
   const { simulation, nodeSelection, width, height } = sharedD3;
-  
+
   const ageGenderCounts = processedData.finalCounts.ageByGender;
   const rowHeight = 45;
   const nodeSpacing = SETTINGS.node.radius * 2.5;
@@ -704,7 +724,7 @@ function transitionToAgeGenderPyramid(processedData) {
       womenInGroup[j].targetX = (width / 2) + (pyramidGap / 2) + (j * nodeSpacing);
       womenInGroup[j].targetY = currentY;
     }
-    
+
     currentY -= rowHeight;
   });
 
@@ -721,23 +741,28 @@ function transitionToAgeGenderPyramid(processedData) {
     .attr("fill", (d) => SETTINGS.gender.colors[d.genderGroup === 0 ? "male" : "female"]);
 
   const ageLabelsData = SETTINGS.ageLabels.map((text, i) => {
-      const yPos = (height / 2 + totalPyramidHeight / 2) - (i * rowHeight);
-      return { text: text, x: width / 2, y: yPos, color: '#555' };
+    const yPos = (height / 2 + totalPyramidHeight / 2) - (i * rowHeight);
+    return { text: text, x: width / 2, y: yPos, color: '#555' };
   });
 
   const genderLabelsData = [
-      {text: "Homens", x: width/2 - pyramidGap - 50, y: height/2 - totalPyramidHeight/2 - 35},
-      {text: "Mulheres", x: width/2 + pyramidGap + 50, y: height/2 - totalPyramidHeight/2 - 35}
+    { text: "Homens", x: width / 2 - pyramidGap - 50, y: height / 2 - totalPyramidHeight / 2 - 35 },
+    { text: "Mulheres", x: width / 2 + pyramidGap + 50, y: height / 2 - totalPyramidHeight / 2 - 35 }
   ];
 
   updateLabels([...ageLabelsData, ...genderLabelsData]);
 }
+
 function setupObserver(processedData) {
   const observer = new IntersectionObserver(
     (entries) => {
       reapplyCollision();
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
+          for (let i = onExitHandlers.length - 1; i >= 0; i--) {
+            onExitHandlers[i]();
+            onExitHandlers.pop();
+          }
           const step = entry.target.id;
           switch (step) {
             case "step-initial":
@@ -757,9 +782,7 @@ function setupObserver(processedData) {
                 processedData.percentages.literacyByAge
               );
             case "step-gender":
-              return transitionToGender(
-                processedData.percentages.gender, processedData.nodes
-              );
+              return transitionToGender(processedData);
             case "step-flag": // Etapa da bandeira adicionada
               return transitionToFlag(processedData.nodes);
           }

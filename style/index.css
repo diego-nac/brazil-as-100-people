@@ -117,7 +117,6 @@ body {
     font-size: 15px;
     font-weight: 700;
     text-anchor: middle;
-    fill: var(--text-primary); /* Garante que o texto seja visível no fundo escuro */
     paint-order: stroke; /* Adiciona um contorno para melhor legibilidade */
     stroke: var(--background-color);
     stroke-width: 3px;
