@@ -443,27 +443,60 @@ function transitionToAgePyramid(processedData) {
     y: pyramidLayout[i].y,
   }));
   updateLabels(labelData);
-}
-
-function transitionToLiteracy(percentages) {
+}function transitionToLiteracy(percentages) {
   const { simulation, nodeSelection, width, height } = sharedD3;
   const literacyLabels = ["Alfabetizados", "Não Alfabetizados"];
+
+  // 1. Separar os nós em dois grupos: alfabetizados e não alfabetizados.
+  const allNodes = nodeSelection.data();
+  const literateNodes = allNodes.filter(d => d.literacyGroup === 0);
+  const nonLiterateNodes = allNodes.filter(d => d.literacyGroup === 1);
+
+  // 2. Obter todas as posições iniciais do mapa e ordená-las pela coordenada Y.
+  // Isso nos permite saber quais posições estão mais ao "sul" (maior valor de Y).
+  const mapPositions = allNodes.map(d => ({ x: d.initialX, y: d.initialY }))
+    .sort((a, b) => b.y - a.y); // Ordena do maior Y (sul) para o menor Y (norte).
+
+  // 3. Atribuir as posições do sul para os não alfabetizados e o resto para os alfabetizados.
+  const southPositions = mapPositions.splice(0, nonLiterateNodes.length);
+  const northPositions = mapPositions; // O que sobrou.
+
+  // Embaralha as posições dentro de cada grupo para uma aparência mais natural.
+  d3.shuffle(southPositions);
+  d3.shuffle(northPositions);
+
+  // Define as coordenadas de destino para cada nó.
+  nonLiterateNodes.forEach((node, i) => {
+    node.targetX = southPositions[i].x;
+    node.targetY = southPositions[i].y;
+  });
+  literateNodes.forEach((node, i) => {
+    node.targetX = northPositions[i].x;
+    node.targetY = northPositions[i].y;
+  });
+
+  // 4. Aplica as forças para mover cada nó para seu novo destino.
   simulation
-    .force("x", d3.forceX(width / 2).strength(SETTINGS.forces.xStrength))
-    .force("y", d3.forceY(height / 2).strength(SETTINGS.forces.yStrength))
+    .force("x", d3.forceX(d => d.targetX).strength(SETTINGS.forces.xStrength))
+    .force("y", d3.forceY(d => d.targetY).strength(SETTINGS.forces.yStrength))
     .alpha(1)
     .restart();
+
+  // 5. Colore os nós de acordo com o grupo.
   nodeSelection
     .transition()
     .duration(800)
     .attr("fill", (d) => SETTINGS.literacyColors[d.literacyGroup]);
+  
+  // 6. Aproxima as legendas.
   const labelData = literacyLabels.map((text, i) => ({
     text,
     percentage: percentages[i],
-    x: width / 2,
-    y: i === 0 ? height * 0.25 : height * 0.75,
+    x: width * 0.15,
+    y: height * 0.15 + (i * 22), // A distância vertical foi reduzida de 30 para 22.
     color: SETTINGS.literacyColors[i]
   }));
+
   updateLabels(labelData);
 }
 
