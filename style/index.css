@@ -1,18 +1,43 @@
-/* Importa fontes modernas do Google Fonts */
+/* Importa fontes (usadas principalmente no modo escuro, mas bom ter aqui) */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Merriweather:wght@400;700&display=swap');
 
-:root {
+#theme-toggle-button:hover {
+    transform: scale(1.1);
+}
+
+#theme-toggle-button:active {
+    transform: scale(0.95);
+}
+
+/* --- TEMA ESCURO (ATIVADO COM A CLASSE .dark-mode NO BODY) --- */
+body.dark-mode {
     /* Paleta de Cores (Tema Escuro) */
     --background-color: #121212;
     --panel-background: #1e1e1e;
     --text-primary: #e0e0e0;
     --text-secondary: #b0b0b0;
-    --accent-color: #03dac6; /* Um verde-água vibrante como cor de destaque */
+    --accent-color: #03dac6; /* Verde-água vibrante */
     --border-color: #2c2c2c;
+    --viz-background: radial-gradient(circle, #2a2a2a 0%, #121212 70%);
 
-    /* Tipografia */
+    /* Tipografia (Tema Escuro) */
     --font-heading: 'Poppins', 'Helvetica Neue', sans-serif;
     --font-body: 'Merriweather', serif;
+}
+/* --- TEMA CLARO (CORRIGIDO) --- */
+:root {
+    /* Paleta de Cores (Tema Claro) */
+    --background-color: #FDFDFD;
+    --panel-background: #FFFFFF;
+    --text-primary: #212121;
+    --text-secondary: #555;
+    --accent-color: #00796B;
+    --border-color: #E0E0E0;
+    --viz-background: #f0f0f0; /* Mantenha apenas esta linha correta */
+
+    /* Tipografia (Tema Claro) */
+    --font-heading: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --font-body: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 html {
@@ -30,7 +55,6 @@ body {
 }
 
 /* --- LADO ESQUERDO: VISUALIZAÇÃO --- */
-
 #visualization-container {
     position: fixed;
     top: 0;
@@ -40,7 +64,9 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: radial-gradient(circle, #2a2a2a 0%, var(--background-color) 70%);
+    /* AGORA USA A VARIÁVEL CORRETAMENTE */
+    background: var(--viz-background); 
+    transition: background 0.3s ease; /* Adiciona uma transição suave */
 }
 
 #d3-viz {
@@ -122,4 +148,26 @@ body {
     stroke-width: 3px;
     stroke-linecap: butt;
     stroke-linejoin: miter;
+}
+
+
+/* --- BOTÃO FLUTUANTE DE TEMA --- */
+#theme-toggle-button {
+    position: fixed;
+    top: 25px;
+    right: 25px;
+    z-index: 9999;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background-color: var(--panel-background);
+    color: var(--text-primary);
+    font-size: 1.5rem; /* Tamanho do ícone */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease, border-color 0.3s ease;
 }

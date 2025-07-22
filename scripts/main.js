@@ -1,4 +1,5 @@
 import SETTINGS from "./settings.js";
+import "./toggle.js";
 
 const d3Viz = d3.select("#d3-viz");
 let sharedD3 = {};
