@@ -8,66 +8,84 @@
     <link rel="stylesheet" href="style/index.css">
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 </head>
-
 <body>
     <div id="visualization-container">
         <div id="d3-viz"></div>
     </div>
+
     <div id="content-container">
+
         <section class="step" id="step-initial">
             <h1>O Brasil em 100 Pessoas</h1>
-            <p>Todos os números que você verá aqui vêm <strong>exclusivamente</strong> do Censo Demográfico 2022. Cada
-               ponto equivale a 1 % dos 203,1 milhões de habitantes recenseados, permitindo observar a composição do país
-               como se fôssemos apenas cem pessoas.</p>
+            <p>
+                Para entender um país de 203 milhões de pessoas, a melhor forma é simplificar. E se o Brasil inteiro coubesse em uma pequena comunidade de 100 vizinhos? Quem seríamos nós?
+            </p>
+            <p>
+                Cada ponto de luz que você vê é um de nós. Juntos, eles contam a nossa história, baseada nos dados do Censo Demográfico de 2022. Vamos nos conhecer de perto.
+            </p>
         </section>
 
-        <!-- 1. RAÇA / COR -->
         <section class="step" id="step-race">
-            <h2>1. Distribuição Étnico-Racial</h2>
-            <p>Na autodeclaração de cor ou raça, <strong>45,3 %</strong> dos brasileiros (≈ 92,1 mi) afirmaram ser <em>pardos</em>,
-               <strong>43,5 %</strong> (≈ 88,3 mi) <em>brancos</em>, <strong>10,2 %</strong> (≈ 20,6 mi) <em>pretos</em>,
-               <strong>0,8 %</strong> (≈ 1,7 mi) <em>indígenas</em> e <strong>0,4 %</strong> (≈ 0,85 mi) <em>amarelos</em>.
-               Em relação a 2010, as populações preta (+42 %) e parda (+12 %) cresceram, enquanto a branca perdeu 4,2 pontos
-               percentuais.</p>
+            <h2>O Mosaico da Nossa Gente</h2>
+            <p>
+                Ao olhar para nossa comunidade, o primeiro traço que notaríamos é a cor da nossa pele. Pela primeira vez na história, a maioria de nós — <strong>45 pessoas</strong> (45,3%) — se identifica como parda, o retrato da nossa rica miscigenação.
+            </p>
+            <p>
+                Ao nosso lado, veríamos <strong>44 vizinhos</strong> brancos (43,5%) e <strong>10</strong> pretos (10,2%). Esse retrato, com o crescimento das populações preta e parda, reflete não só a demografia, mas um profundo movimento de valorização e afirmação da nossa diversidade. Completando o mosaico, <strong>1 pessoa</strong> se declararia amarela ou indígena.
+            </p>
         </section>
 
-        <!-- 2. ESTRUTURA ETÁRIA -->
         <section class="step" id="step-age-pyramid">
-            <h2>2. Estrutura Etária</h2>
-            <p>A pirâmide etária mostra rápido envelhecimento: pessoas com <strong>65 anos ou mais</strong> somam
-               <strong>22,2 mi</strong> (10,9 %), alta de 57 % desde 2010, ao passo que crianças de 0–14 anos caíram para
-               <strong>40,1 mi</strong> (19,8 %). A idade mediana saltou de 29 para 35 anos em apenas doze anos.</p>
+            <h2>As Gerações em Transformação</h2>
+            <p>
+                Nossa comunidade de 100 pessoas nos contaria uma história sobre o tempo. A base, que antes era larga e jovem, hoje tem apenas <strong>20 crianças e adolescentes</strong> com até 14 anos, um grupo que encolheu 12,6% desde 2010.
+            </p>
+            <p>
+                Em contraste, o topo da pirâmide se alarga. Seríamos <strong>11 vizinhos</strong> com 65 anos ou mais, um grupo que cresceu impressionantes 57,4% no mesmo período. Com a idade mediana do país saltando de 29 para 35 anos, o recado é claro: o Brasil amadurece.
+            </p>
         </section>
 
-        <!-- 3. ALFABETIZAÇÃO -->
         <section class="step" id="step-literacy">
-            <h2>3. Alfabetização</h2>
-            <p>Entre os <strong>163 mi</strong> de brasileiros com 15 anos ou mais, <strong>93,0 %</strong> sabem ler e
-               escrever (≈ 151,5 mi). Permanecem <strong>7,0 %</strong> analfabetos (≈ 11,4 mi), proporção que despenca para
-               1,5 % nos jovens de 15–19 anos, mas chega a 20,3 % no grupo de 65+.</p>
+            <h2>O Saber que Constrói o Futuro</h2>
+            <p>
+                A educação é o que nos move. Em nossa comunidade, uma ótima notícia: se olharmos para todos com 15 anos ou mais, a imensa maioria — <strong>93 pessoas</strong> — sabe ler e escrever um simples bilhete.
+            </p>
+            <p>
+                Mas nossa história não estaria completa sem olhar para os <strong>7 vizinhos</strong> que ainda enfrentam o desafio do analfabetismo. A maioria deles são idosos, um eco de um passado com menos oportunidades, que contrasta com a nova geração, onde essa barreira é quase inexistente (1,5%).
+            </p>
+        </section>
+<section class="step" id="step-literacy-age">
+            <h2>A Educação e Suas Cicatrizes</h2>
+            <p>
+                A lupa sobre o conhecimento revela uma fratura, não entre cores, mas entre gerações. É a cicatriz do tempo. Entre os jovens de 15 a 29 anos, o analfabetismo é uma memória distante: <strong>praticamente todos sabem ler e escrever</strong> (98,4%).
+            </p>
+            <p>
+                Contudo, ao caminharmos pelas idades, as marcas de um Brasil com menos oportunidades se tornam nítidas. A taxa de alfabetização cai para 88,4% no grupo de 50 a 69 anos. O verdadeiro abismo está entre os nossos anciãos: na comunidade com mais de 70 anos, <strong>um em cada quatro vizinhos</strong> (24,4%) não teve a chance de ser alfabetizado. É a prova viva de que cada nova geração herda um país com mais acesso ao saber.
+            </p>
         </section>
 
-        <!-- 4. ALFABETIZAÇÃO POR RAÇA/IDADE -->
-        <section class="step" id="step-literacy-age">
-            <h2>4. Alfabetização por Raça e Idade</h2>
-            <p>Analfabetismo atinge 10,1 % dos pretos, 8,8 % dos pardos e 16,1 % dos indígenas, contra 4,3 % dos brancos e
-               2,5 % dos amarelos. O contraste é mais agudo acima de 65 anos, quando pretos superam brancos em 20 p.p.
-               Regionalmente, o Nordeste registra a menor taxa de alfabetização: 85,8 %.</p>
-        </section>
-
-        <!-- 5. GÊNERO -->
         <section class="step" id="step-gender">
-            <h2>5. Distribuição por Gênero</h2>
-            <p>O país conta com <strong>104,5 mi</strong> de mulheres (51,5 %) e <strong>98,5 mi</strong> de homens (48,5 %).
-               A razão de sexo desceu a 94,2 homens por 100 mulheres, refletindo mortalidade masculina mais elevada após
-               os 25 anos.</p>
+            <h2>A Força Feminina do Brasil</h2>
+            <p>
+                E quem forma a maioria em nossa comunidade? Nós, as mulheres. Das 100 pessoas, seríamos <strong>52 mulheres</strong> (51,5%) e <strong>48 homens</strong> (48,5%), uma diferença que, em escala nacional, representa 6 milhões de mulheres a mais.
+            </p>
+            <p>
+                Essa maioria feminina, que se acentua com o passar dos anos devido à maior mortalidade masculina, não é apenas um dado demográfico. É uma força que molda a sociedade, o mercado de trabalho e o futuro do país.
+            </p>
         </section>
-    <section class="step" id="step-flag">
-        <h1>O Brasil em 100 Pessoas</h1>
-        <p>O Censo 2022 evidencia a diversidade e a transformação do país, revelando mudanças importantes na composição por raça, gênero, idade e escolaridade. Cada dado ajuda a entender a sociedade brasileira atual e a projetar políticas públicas mais eficazes para o futuro. Fim.</p>
-    </section>
+
+        <section class="step" id="step-flag">
+            <h1>Um Retrato em Constante Movimento</h1>
+            <p>
+                Nossa jornada com estas 100 pessoas chega ao fim. O que vemos é um Brasil que se reconhece mais diverso, que amadurece e que avança no conhecimento, mesmo com profundas desigualdades a serem superadas.
+            </p>
+            <p>
+                Os números do Censo são o espelho das nossas vidas, com suas lutas, conquistas e esperanças. Juntas, estas 100 pessoas, com todas as suas cores e idades, formam uma única e vibrante nação. <strong>Este é o nosso Brasil.</strong>
+            </p>
+        </section>
 
     </div>
+    <button id="theme-toggle-button" title="Alternar tema"></button>
     <script type="module" src="scripts/main.js"></script>
 </body>
 
