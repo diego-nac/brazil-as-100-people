@@ -1,45 +1,42 @@
-/* Importa fontes (usadas principalmente no modo escuro, mas bom ter aqui) */
+/* Importa fontes */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Merriweather:wght@400;700&display=swap');
 
-#theme-toggle-button:hover {
-    transform: scale(1.1);
+html{
+    overflow-x: hidden;
+
 }
 
-#theme-toggle-button:active {
-    transform: scale(0.95);
-}
-
-/* --- TEMA ESCURO (ATIVADO COM A CLASSE .dark-mode NO BODY) --- */
+/* --- TEMA ESCURO --- */
 body.dark-mode {
-    /* Paleta de Cores (Tema Escuro) */
     --background-color: #121212;
     --panel-background: #1e1e1e;
     --text-primary: #e0e0e0;
     --text-secondary: #b0b0b0;
-    --accent-color: #03dac6; /* Verde-água vibrante */
+    --accent-color: #03dac6;
     --border-color: #2c2c2c;
     --viz-background: radial-gradient(circle, #2a2a2a 0%, #121212 70%);
+    --accent-shadow-color: rgba(3, 218, 198, 0.2); /* ADICIONADO */
 
-    /* Tipografia (Tema Escuro) */
     --font-heading: 'Poppins', 'Helvetica Neue', sans-serif;
     --font-body: 'Merriweather', serif;
 }
-/* --- TEMA CLARO (CORRIGIDO) --- */
+
+/* --- TEMA CLARO --- */
 :root {
-    /* Paleta de Cores (Tema Claro) */
     --background-color: #FDFDFD;
     --panel-background: #FFFFFF;
     --text-primary: #212121;
     --text-secondary: #555;
     --accent-color: #00796B;
     --border-color: #E0E0E0;
-    --viz-background: #f0f0f0; /* Mantenha apenas esta linha correta */
+    --viz-background: #f0f0f0;
+    --accent-shadow-color: rgba(0, 121, 107, 0.2); /* ADICIONADO */
 
-    /* Tipografia (Tema Claro) */
     --font-heading: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     --font-body: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
+/* --- ESTILOS GERAIS E LAYOUT --- */
 html {
     scroll-behavior: smooth;
 }
@@ -51,10 +48,9 @@ body {
     background-color: var(--background-color);
     color: var(--text-primary);
     font-family: var(--font-body);
-    font-weight: 400;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* --- LADO ESQUERDO: VISUALIZAÇÃO --- */
 #visualization-container {
     position: fixed;
     top: 0;
@@ -64,9 +60,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    /* AGORA USA A VARIÁVEL CORRETAMENTE */
-    background: var(--viz-background); 
-    transition: background 0.3s ease; /* Adiciona uma transição suave */
+    background: var(--viz-background);
+    transition: background 0.3s ease;
 }
 
 #d3-viz {
@@ -74,84 +69,63 @@ body {
     height: 100%;
 }
 
-/* --- LADO DIREITO: CONTEÚDO --- */
-
 #content-container {
     width: 45%;
     margin-left: 55%;
     background-color: var(--panel-background);
     border-left: 1px solid var(--border-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
+/* --- SEÇÕES DE CONTEÚDO (.step) --- */
 .step {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 3rem 4rem; /* Aumenta o espaçamento interno */
+    padding: 3rem 4rem;
     box-sizing: border-box;
     border-bottom: 1px solid var(--border-color);
-    opacity: 0.6; /* Deixa as seções inativas um pouco foscas */
-    transition: opacity 0.4s ease-in-out;
+    transition: border-color 0.3s ease;
 }
 
-/* O JavaScript vai fazer a seção que está sendo vista ficar mais nítida,
-   este efeito funciona melhor com um observador que adiciona uma classe 'is-active' */
-/* Por enquanto, vamos deixar todas as seções igualmente visíveis para garantir a funcionalidade */
-.step {
-    opacity: 1;
-}
-
-/* --- TIPOGRAFIA E ESTILOS DE TEXTO --- */
-
+/* --- TIPOGRAFIA --- */
 .step h1, .step h2 {
     font-family: var(--font-heading);
     font-weight: 700;
-    margin: 0;
-    padding: 0;
+    color: var(--text-primary);
     line-height: 1.2;
 }
 
-.step h1 {
-    font-size: 2.8rem;
-    color: var(--text-primary);
-    margin-bottom: 1.5rem;
-}
-
 .step h2 {
-    font-size: 1.8rem;
-    color: var(--accent-color); /* Usa a cor de destaque para subtítulos */
-    margin-bottom: 1rem;
+    color: var(--accent-color);
 }
 
 .step p {
     font-size: 1.1rem;
-    line-height: 1.9; /* Melhora a legibilidade */
+    line-height: 1.8;
     max-width: 65ch;
     color: var(--text-secondary);
 }
 
 .step strong {
-    color: var(--text-primary);
     font-weight: 700;
+    color: var(--text-primary);
 }
 
-/* --- ESTILOS PARA OS LABELS DO D3.JS --- */
-
+/* --- ESTILOS D3.JS --- */
 .group-label {
     font-family: var(--font-heading);
     font-size: 15px;
     font-weight: 700;
     text-anchor: middle;
-    paint-order: stroke; /* Adiciona um contorno para melhor legibilidade */
+    fill: var(--text-primary); /* ADICIONADO: Define a cor do texto SVG */
+    paint-order: stroke;
     stroke: var(--background-color);
     stroke-width: 3px;
-    stroke-linecap: butt;
-    stroke-linejoin: miter;
 }
 
-
-/* --- BOTÃO FLUTUANTE DE TEMA --- */
+/* --- BOTÃO DE TEMA --- */
 #theme-toggle-button {
     position: fixed;
     top: 25px;
@@ -163,11 +137,60 @@ body {
     border: 1px solid var(--border-color);
     background-color: var(--panel-background);
     color: var(--text-primary);
-    font-size: 1.5rem; /* Tamanho do ícone */
+    font-size: 1.5rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease, border-color 0.3s ease;
+    transition: all 0.3s ease;
+}
+
+#theme-toggle-button:hover {
+    transform: scale(1.1);
+}
+
+/* --- ESTILO DO SELECT (TOTALMENTE CORRIGIDO) --- */
+.custom-select-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 250px;
+    margin-top: 1.5rem;
+}
+
+.custom-select {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    background-color: var(--panel-background); /* CORRIGIDO: Usa a variável de fundo */
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.custom-select:hover {
+    border-color: var(--accent-color); /* CORRIGIDO: Usa a variável de destaque */
+}
+
+.custom-select:focus {
+    outline: none;
+    border-color: var(--accent-color); /* CORRIGIDO: Usa a variável de destaque */
+    box-shadow: 0 0 0 3px var(--accent-shadow-color); /* CORRIGIDO: Usa a variável de sombra */
+}
+
+.custom-select-wrapper::after {
+    content: '▼';
+    font-size: 12px;
+    color: var(--text-secondary); /* CORRIGIDO: Usa a variável de texto secundário */
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
 }

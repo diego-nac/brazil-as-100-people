@@ -329,7 +329,7 @@ function updateLabels(labelData) {
           .attr("y", (d) => d.y)
           .text((d) => d.text)
           .attr("opacity", 0)
-          .attr("fill", (d) => d.color ?? "#e0e0e0")
+          .style("fill", (d) => d.color ?? "var(--text-primary)")
           .call((enter) => enter.transition().duration(800).attr("opacity", 1)),
       (update) =>
         update.call((update) =>
